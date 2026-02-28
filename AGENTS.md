@@ -6,7 +6,6 @@
 
 ## 强制执行规则
 - 每次对话只要产生代码修改，必须在根目录 `trace-logs/` 中追加变更记录，并附带可追溯时间戳（示例：`2026-02-28 15:10:00 +08:00`）。
-- 执行 Git 提交时，提交信息必须遵循规范、准确总结本次变更内容，并明确标注该提交由 AI 产生（如在末尾标注 `committed by codex` 等）。
 
 ## 项目结构与模块划分
 - `backend/`：ASP.NET Core Web API（`net10.0`），接口在 `Controllers/`，EF Core 数据模型在 `Data/`，业务模型在 `Models/`，服务实现在 `Services/`。
@@ -37,8 +36,8 @@
   - 前端采用 Vitest，优先覆盖核心工具函数与数据流逻辑。
 
 ## 提交与合并请求规范
-- 提交信息遵循 Conventional Commits，例如：`feat(sync): 新增平台适配`、`fix(api): 修复参数校验`。
-- AI 生成提交必须显式标识（如在末尾标注 `committed by codex` 等）。
+- 提交信息遵循 `Conventional Commits`，例如：`feat(sync): 新增平台适配`、`fix(api): 修复参数校验`。
+- 提交信息需要准确总结本次变更内容，并使用 `markdown` 格式编写。
 - PR 需包含：变更范围、配置/数据库影响、验证步骤、涉及界面的截图（如有）。
 
 ## 安全与配置注意事项
