@@ -170,6 +170,16 @@
 - 调整：`backend/Program.cs`
 - 说明：将 `AddJsonOptions` 配置从 `options.SerializerOptions` 更正为 `options.JsonSerializerOptions`，消除 `CS1061` 编译错误。
 
+25. 2026-02-28 16:40:55 +08:00
+- 变更：为后端接入 Swagger 并增加动态中间件开关
+- 调整：`backend/GameLibrary.Api.csproj`、`backend/Program.cs`、`backend/appsettings.json`、`backend/appsettings.Development.json`、`README.md`
+- 说明：新增 `Swashbuckle.AspNetCore` 依赖，使用 `UseWhen` + 每请求读取 `Swagger:Enabled` 的方式动态启停 Swagger；修改配置后无需重启即可生效。
+
+26. 2026-02-28 16:47:52 +08:00
+- 变更：追加代码编写注释规范
+- 调整：`AGENTS.md`
+- 说明：新增“关键代码必须添加中文注释”的强制要求，并明确注释需解释核心意图与边界条件。
+
 ## 2. 当前最终状态（截至本文件生成）
 
 - 项目根目录：`multi-platform-game-library-manager`

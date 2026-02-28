@@ -58,6 +58,21 @@ dotnet run --project backend/GameLibrary.Api.csproj
   - 文件：`backend/logs/<yyyy-MM-dd>.log`
 - 日志按天滚动，最多保留 30 份归档。
 
+## Swagger 接口文档（动态开关）
+
+- 已集成 `Swashbuckle.AspNetCore`，默认访问地址：`http://localhost:5119/swagger`
+- 配置项：`backend/appsettings.json` 或 `backend/appsettings.Development.json`
+
+```json
+"Swagger": {
+  "Enabled": true
+}
+```
+
+- 支持动态开关：修改 `Swagger:Enabled` 后保存即可生效，无需重启后端。
+  - `true`：启用 Swagger UI 与 JSON
+  - `false`：访问 `/swagger` 返回 404
+
 ## 后端跨平台打包（自包含）
 
 目标：尽量不依赖服务器预装 `.NET Runtime`。  

@@ -34,6 +34,8 @@ try
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
 
     var connectionString = builder.Configuration.GetConnectionString("GameLibraryMySql")
         ?? throw new InvalidOperationException("Missing connection string: ConnectionStrings:GameLibraryMySql");
@@ -53,6 +55,32 @@ try
     var app = builder.Build();
 
     app.UseCors("Frontend");
+    app.UseWhen(
+        context => context.Request.Path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase),
+        branch =>
+        {
+            branch.Use(async (context, next) =>
+            {
+                var configuration = context.RequestServices.GetRequiredService<IConfiguration>();
+                var swaggerEnabled = configuration.GetValue<bool>("Swagger:Enabled");
+                if (!swaggerEnabled)
+                {
+                    context.Response.StatusCode = StatusCodes.Status404NotFound;
+                    await context.Response.WriteAsync("Swagger is disabled.");
+                    return;
+                }
+
+                await next();
+            });
+
+            branch.UseSwagger();
+            branch.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "GameLibrary API v1");
+                options.RoutePrefix = "swagger";
+                options.DocumentTitle = "GameLibrary API Docs";
+            });
+        });
     app.MapControllers();
 
     app.Run();
