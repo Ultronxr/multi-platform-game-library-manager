@@ -1,3 +1,4 @@
+backend/.idea/
 backend/bin/
 backend/obj/
 backend/logs/
@@ -10,3 +11,4 @@ frontend/vite.config.d.ts
 frontend/vite.config.js
 .dotnet/
 .npm-cache/
+.idea/

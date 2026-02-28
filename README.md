@@ -6,7 +6,7 @@
 ## 技术栈
 
 - 前端：Vue 3 + TypeScript + Vite
-- 后端：ASP.NET Core Web API (.NET 10)
+- 后端：ASP.NET Core Web API (.NET 9)
 - 数据库：MySQL 5.7.44（5.7 最新子版本）
 - ORM：EF Core + Pomelo.EntityFrameworkCore.MySql
 - 日志：NLog（控制台 + 文件）

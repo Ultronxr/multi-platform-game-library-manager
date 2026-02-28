@@ -160,6 +160,16 @@
 - 调整：`AGENTS.md`
 - 说明：移除“末尾固定文案标注”示例，改为要求提交信息遵循 Conventional Commits、准确总结变更并使用 markdown 格式。
 
+23. 2026-02-28 16:20:05 +08:00
+- 变更：修复后端依赖版本不可用导致的构建失败
+- 调整：`backend/GameLibrary.Api.csproj`、`README.md`、`AGENTS.md`
+- 说明：将目标框架调整为 `net9.0`，并将 `Microsoft.EntityFrameworkCore` / `Microsoft.EntityFrameworkCore.Design` / `Pomelo.EntityFrameworkCore.MySql` 统一为 `9.0.0`；同步文档版本描述。
+
+24. 2026-02-28 16:22:25 +08:00
+- 变更：修复 `net9.0` 下 JSON 选项 API 编译错误
+- 调整：`backend/Program.cs`
+- 说明：将 `AddJsonOptions` 配置从 `options.SerializerOptions` 更正为 `options.JsonSerializerOptions`，消除 `CS1061` 编译错误。
+
 ## 2. 当前最终状态（截至本文件生成）
 
 - 项目根目录：`multi-platform-game-library-manager`

@@ -8,7 +8,7 @@
 - 每次对话只要产生代码修改，必须在根目录 `trace-logs/` 中追加变更记录，并附带可追溯时间戳（示例：`2026-02-28 15:10:00 +08:00`）。
 
 ## 项目结构与模块划分
-- `backend/`：ASP.NET Core Web API（`net10.0`），接口在 `Controllers/`，EF Core 数据模型在 `Data/`，业务模型在 `Models/`，服务实现在 `Services/`。
+- `backend/`：ASP.NET Core Web API（`net9.0`），接口在 `Controllers/`，EF Core 数据模型在 `Data/`，业务模型在 `Models/`，服务实现在 `Services/`。
 - `backend/sql/`：数据库初始化与参考 SQL 脚本。
 - `backend/scripts/`：跨平台自包含发布脚本（Linux/Windows）。
 - `frontend/`：Vue3 + TypeScript 前端，源码位于 `frontend/src/`。
