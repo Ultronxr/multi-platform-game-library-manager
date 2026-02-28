@@ -150,6 +150,11 @@
 - 调整：`backend/GameLibrary.Api.csproj`、`backend/Program.cs`、`backend/Controllers/SyncController.cs`、`README.md`
 - 说明：启用 NLog Host 集成、异常落日志、同步接口关键流程日志，日志输出到控制台与 `backend/logs`。
 
+21. 2026-02-28 15:49:14 +08:00
+- 变更：将 `AGENTS.md` 全文重写为简体中文版本
+- 调整：`AGENTS.md`
+- 说明：统一文档语言为简体中文，保留并强化强制规则、构建命令、提交规范与安全要求。
+
 ## 2. 当前最终状态（截至本文件生成）
 
 - 项目根目录：`multi-platform-game-library-manager`
