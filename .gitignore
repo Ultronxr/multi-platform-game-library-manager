@@ -1,0 +1,12 @@
+backend/bin/
+backend/obj/
+backend/logs/
+backend/publish/
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/src/*.js
+frontend/vite.config.d.ts
+frontend/vite.config.js
+.dotnet/
+.npm-cache/
