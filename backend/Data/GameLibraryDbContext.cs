@@ -3,10 +3,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameLibrary.Api.Data;
 
+/// <summary>
+/// 游戏库数据库上下文。
+/// </summary>
 public sealed class GameLibraryDbContext(DbContextOptions<GameLibraryDbContext> options) : DbContext(options)
 {
+    /// <summary>
+    /// 平台账号集合。
+    /// </summary>
     public DbSet<PlatformAccountEntity> PlatformAccounts => Set<PlatformAccountEntity>();
+
+    /// <summary>
+    /// 已拥有游戏集合。
+    /// </summary>
     public DbSet<OwnedGameEntity> OwnedGames => Set<OwnedGameEntity>();
+
+    /// <summary>
+    /// 用户集合。
+    /// </summary>
     public DbSet<AppUserEntity> Users => Set<AppUserEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

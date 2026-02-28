@@ -3,12 +3,20 @@ using System.Text;
 
 namespace GameLibrary.Api.Services;
 
+/// <summary>
+/// 密码哈希服务。
+/// </summary>
 public sealed class PasswordHashService
 {
     private const int SaltSize = 16;
     private const int HashSize = 32;
     private const int Iterations = 100_000;
 
+    /// <summary>
+    /// 生成密码哈希。
+    /// </summary>
+    /// <param name="password">明文密码。</param>
+    /// <returns>可持久化的哈希字符串。</returns>
     public string HashPassword(string password)
     {
         if (string.IsNullOrWhiteSpace(password))
@@ -28,6 +36,12 @@ public sealed class PasswordHashService
         return $"v1.{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
     }
 
+    /// <summary>
+    /// 校验明文密码与哈希是否匹配。
+    /// </summary>
+    /// <param name="password">明文密码。</param>
+    /// <param name="passwordHash">持久化哈希。</param>
+    /// <returns>匹配时返回 <c>true</c>。</returns>
     public bool VerifyPassword(string password, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(passwordHash))

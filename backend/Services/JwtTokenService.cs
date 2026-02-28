@@ -6,10 +6,18 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace GameLibrary.Api.Services;
 
+/// <summary>
+/// JWT 令牌签发服务。
+/// </summary>
 public sealed class JwtTokenService(AuthOptions authOptions)
 {
     private readonly byte[] _signingKey = Encoding.UTF8.GetBytes(authOptions.SigningKey);
 
+    /// <summary>
+    /// 为指定用户生成访问令牌。
+    /// </summary>
+    /// <param name="user">登录用户。</param>
+    /// <returns>令牌字符串及过期时间。</returns>
     public (string token, DateTime expiresAtUtc) CreateAccessToken(AppUserEntity user)
     {
         var expiresAtUtc = DateTime.UtcNow.AddMinutes(authOptions.AccessTokenMinutes);

@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GameLibrary.Api.Controllers;
 
+/// <summary>
+/// 平台库存同步控制器。
+/// </summary>
 [ApiController]
 [Route("api/sync")]
 [Authorize]
@@ -15,6 +18,12 @@ public sealed class SyncController(
     IGameLibraryStore store,
     ILogger<SyncController> logger) : ControllerBase
 {
+    /// <summary>
+    /// 同步 Steam 库存。
+    /// </summary>
+    /// <param name="request">同步请求。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>同步结果。</returns>
     [HttpPost("steam")]
     public async Task<IActionResult> SyncSteam([FromBody] SteamSyncRequest request, CancellationToken cancellationToken)
     {
@@ -63,6 +72,12 @@ public sealed class SyncController(
         return Ok(new { syncedCount = result.Games.Count });
     }
 
+    /// <summary>
+    /// 同步 Epic 库存。
+    /// </summary>
+    /// <param name="request">同步请求。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>同步结果。</returns>
     [HttpPost("epic")]
     public async Task<IActionResult> SyncEpic([FromBody] EpicSyncRequest request, CancellationToken cancellationToken)
     {

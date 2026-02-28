@@ -3,8 +3,17 @@ using GameLibrary.Api.Models;
 
 namespace GameLibrary.Api.Services;
 
+/// <summary>
+/// Epic 已拥有游戏拉取客户端。
+/// </summary>
 public sealed class EpicLibraryClient(HttpClient httpClient)
 {
+    /// <summary>
+    /// 调用 Epic 库存接口获取账号已拥有游戏。
+    /// </summary>
+    /// <param name="accessToken">Epic Bearer Token。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>同步结果。</returns>
     public async Task<SyncResult> GetOwnedGamesAsync(string accessToken, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(
@@ -41,6 +50,7 @@ public sealed class EpicLibraryClient(HttpClient httpClient)
 
     private static IEnumerable<JsonElement> ExtractItems(JsonElement root)
     {
+        // Epic 返回结构在不同场景可能为数组或 records/elements/items 包装对象，统一兜底提取。
         if (root.ValueKind == JsonValueKind.Array)
         {
             return root.EnumerateArray().ToArray();

@@ -1,8 +1,7 @@
-# 会话代码更新全量追溯（2026-02-28）
+# 变更记录（2026-02-28）
 
-- 生成时间：2026-02-28 14:55:45 +08:00
-- 追溯范围：本次会话从“创建项目”到“切换 MySQL 5.7.44 + EF Core ORM”全部代码变更
-- 说明：时间基于终端执行记录与会话顺序整理，精度为分钟级（部分为区间/估算）
+- 文件名规则：`CHANGELOG_{yyyy-MM-dd}.md`
+- 说明：本文件仅记录 `2026-02-28` 当日变更；历史早期记录部分为分钟级区间（估算）。
 
 ## 1. 时间线（逐次更新）
 
@@ -197,32 +196,3 @@
   - `frontend/src/api.ts`、`frontend/src/types.ts`、`frontend/src/App.vue`、`frontend/src/style.css`（登录态、token 持久化、Bearer 自动附带）
   - `README.md`（新增鉴权部署与使用说明）
 - 说明：实现“未登录不可访问业务接口”，支持首次 bootstrap 管理员、登录获取 JWT、前端登录后再使用库存同步与查询。
-
-## 2. 当前最终状态（截至本文件生成）
-
-- 项目根目录：`multi-platform-game-library-manager`
-- 后端 API 组织方式：Controller 模式
-- 数据访问方式：EF Core ORM
-- 数据库目标版本：MySQL 5.7.44
-- 鉴权方案：JWT + `app_users` 用户表（PBKDF2 密码哈希，接口默认需登录）
-- 发布方式：支持跨平台自包含单文件发布（优先 Ubuntu `linux-x64`）
-- 日志方案：NLog（控制台 + 文件滚动）
-- 覆盖数据类型：
-  - 平台账号信息
-  - 登录凭证信息（返回时掩码）
-  - 游戏库存数据
-
-## 3. 关键最终文件索引
-
-- 入口：`backend/Program.cs`
-- 控制器：`backend/Controllers/*.cs`
-- ORM 上下文：`backend/Data/GameLibraryDbContext.cs`
-- ORM 实体：`backend/Data/Entities/*.cs`
-- 存储服务：`backend/Services/EfCoreGameLibraryStore.cs`
-- SQL 文件：`backend/sql/001_init_schema.sql`、`backend/sql/002_backend_queries.sql`
-- 项目说明：`README.md`
-
-## 4. 备注
-
-- 本追溯文件记录“代码更新”本身，不包含每次命令失败重试的全部终端细节。
-- 若需要，我可以继续生成第二份“命令执行审计日志（含失败原因与恢复动作）”。

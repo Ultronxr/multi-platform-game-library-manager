@@ -3,8 +3,18 @@ using GameLibrary.Api.Models;
 
 namespace GameLibrary.Api.Services;
 
+/// <summary>
+/// Steam 已拥有游戏拉取客户端。
+/// </summary>
 public sealed class SteamOwnedGamesClient(HttpClient httpClient)
 {
+    /// <summary>
+    /// 调用 Steam API 获取账号已拥有游戏。
+    /// </summary>
+    /// <param name="apiKey">Steam Web API Key。</param>
+    /// <param name="steamId">SteamID64。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>同步结果。</returns>
     public async Task<SyncResult> GetOwnedGamesAsync(string apiKey, string steamId, CancellationToken cancellationToken)
     {
         var url =
@@ -27,6 +37,7 @@ public sealed class SteamOwnedGamesClient(HttpClient httpClient)
         if (!responseNode.TryGetProperty("games", out var gamesNode) ||
             gamesNode.ValueKind != JsonValueKind.Array)
         {
+            // Steam 在账号无库存或隐私受限时可能不返回 games 数组，按空库处理。
             return SyncResult.Success([]);
         }
 

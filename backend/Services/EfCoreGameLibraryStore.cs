@@ -5,8 +5,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GameLibrary.Api.Services;
 
+/// <summary>
+/// 基于 EF Core 的游戏库存存储实现。
+/// </summary>
 public sealed class EfCoreGameLibraryStore(IDbContextFactory<GameLibraryDbContext> dbContextFactory) : IGameLibraryStore
 {
+    /// <summary>
+    /// 保存平台账号及游戏列表。
+    /// </summary>
+    /// <param name="platform">游戏平台。</param>
+    /// <param name="accountName">账号名称。</param>
+    /// <param name="externalAccountId">平台侧账号标识。</param>
+    /// <param name="credentialType">凭证类型。</param>
+    /// <param name="credentialValue">凭证值。</param>
+    /// <param name="games">游戏集合。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
     public async Task SaveAccountAndGamesAsync(
         GamePlatform platform,
         string accountName,
@@ -67,6 +80,7 @@ public sealed class EfCoreGameLibraryStore(IDbContextFactory<GameLibraryDbContex
             .ToListAsync(cancellationToken);
         if (existingGames.Count > 0)
         {
+            // 采用整账号全量覆盖策略，避免增量同步造成的历史脏数据残留。
             db.OwnedGames.RemoveRange(existingGames);
             await db.SaveChangesAsync(cancellationToken);
         }
@@ -95,6 +109,11 @@ public sealed class EfCoreGameLibraryStore(IDbContextFactory<GameLibraryDbContex
         await tx.CommitAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// 查询全部游戏库存。
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>游戏集合。</returns>
     public async Task<IReadOnlyCollection<OwnedGame>> GetAllGamesAsync(CancellationToken cancellationToken)
     {
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
@@ -112,6 +131,11 @@ public sealed class EfCoreGameLibraryStore(IDbContextFactory<GameLibraryDbContex
             .ToList();
     }
 
+    /// <summary>
+    /// 查询全部已保存账号。
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>账号集合。</returns>
     public async Task<IReadOnlyCollection<SavedAccount>> GetAllAccountsAsync(CancellationToken cancellationToken)
     {
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
