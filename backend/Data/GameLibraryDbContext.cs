@@ -7,9 +7,54 @@ public sealed class GameLibraryDbContext(DbContextOptions<GameLibraryDbContext> 
 {
     public DbSet<PlatformAccountEntity> PlatformAccounts => Set<PlatformAccountEntity>();
     public DbSet<OwnedGameEntity> OwnedGames => Set<OwnedGameEntity>();
+    public DbSet<AppUserEntity> Users => Set<AppUserEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AppUserEntity>(entity =>
+        {
+            entity.ToTable("app_users");
+
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id)
+                .HasColumnName("id");
+
+            entity.Property(x => x.Username)
+                .HasColumnName("username")
+                .HasMaxLength(64)
+                .IsRequired();
+
+            entity.Property(x => x.PasswordHash)
+                .HasColumnName("password_hash")
+                .HasMaxLength(512)
+                .IsRequired();
+
+            entity.Property(x => x.Role)
+                .HasColumnName("role")
+                .HasMaxLength(32)
+                .IsRequired();
+
+            entity.Property(x => x.IsActive)
+                .HasColumnName("is_active")
+                .HasDefaultValue(true);
+
+            entity.Property(x => x.CreatedAtUtc)
+                .HasColumnName("created_at")
+                .HasColumnType("datetime(6)");
+
+            entity.Property(x => x.UpdatedAtUtc)
+                .HasColumnName("updated_at")
+                .HasColumnType("datetime(6)");
+
+            entity.Property(x => x.LastLoginAtUtc)
+                .HasColumnName("last_login_at")
+                .HasColumnType("datetime(6)");
+
+            entity.HasIndex(x => x.Username)
+                .HasDatabaseName("uk_app_users_username")
+                .IsUnique();
+        });
+
         modelBuilder.Entity<PlatformAccountEntity>(entity =>
         {
             entity.ToTable("platform_accounts");

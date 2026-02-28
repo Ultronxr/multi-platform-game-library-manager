@@ -42,3 +42,37 @@ export interface EpicSyncRequest {
   accessToken: string;
   accountName?: string;
 }
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface BootstrapAdminRequest {
+  setupToken: string;
+  username: string;
+  password: string;
+}
+
+export interface CreateUserRequest {
+  username: string;
+  password: string;
+  role?: "admin" | "user";
+}
+
+export interface AuthLoginResponse {
+  accessToken: string;
+  expiresAtUtc: string;
+  username: string;
+  role: string;
+}
+
+export interface CurrentUserResponse {
+  username: string;
+  role: string;
+}
+
+export interface BootstrapStatusResponse {
+  hasAnyUser: boolean;
+  bootstrapEnabled: boolean;
+}

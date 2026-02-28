@@ -1,11 +1,13 @@
 using GameLibrary.Api.Models;
 using GameLibrary.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GameLibrary.Api.Controllers;
 
 [ApiController]
 [Route("api")]
+[Authorize]
 public sealed class LibraryController(
     IGameLibraryStore store,
     DuplicateDetector duplicateDetector) : ControllerBase

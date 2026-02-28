@@ -74,3 +74,42 @@ SELECT
   last_synced_at
 FROM platform_accounts
 ORDER BY platform ASC, account_name ASC;
+
+-- 6) Check whether bootstrap-admin is still available
+SELECT COUNT(1) AS user_count
+FROM app_users;
+
+-- 7) Query active user by username (login)
+SELECT
+  id,
+  username,
+  password_hash,
+  role,
+  is_active,
+  created_at,
+  updated_at,
+  last_login_at
+FROM app_users
+WHERE username = @username
+LIMIT 1;
+
+-- 8) Insert admin/user account
+INSERT INTO app_users (
+  username,
+  password_hash,
+  role,
+  is_active
+)
+VALUES (
+  @username,
+  @passwordHash,
+  @role,
+  1
+);
+
+-- 9) Update user login timestamp
+UPDATE app_users
+SET
+  last_login_at = UTC_TIMESTAMP(6),
+  updated_at = UTC_TIMESTAMP(6)
+WHERE id = @userId;

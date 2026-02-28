@@ -42,6 +42,7 @@ mysql -u root -p < backend/sql/001_init_schema.sql
 1. 编辑 `backend/appsettings.json`：
    - `ConnectionStrings:GameLibraryMySql`
    - `Steam:ApiKey`（可选，也可每次请求携带）
+   - `Auth`（`Issuer`、`Audience`、`SigningKey`、`AccessTokenMinutes`、`BootstrapToken`）
 2. 启动后端：
 
 ```powershell
@@ -49,6 +50,16 @@ dotnet run --project backend/GameLibrary.Api.csproj
 ```
 
 默认地址见 `backend/Properties/launchSettings.json`（通常是 `http://localhost:5119`）。
+
+## 登录与鉴权流程（必做）
+
+除 `/api/health` 与 `/api/auth/*` 里的匿名接口外，其他接口默认都需要 JWT 登录。
+
+1. 首次部署时，先在配置中设置 `Auth:BootstrapToken` 与强随机 `Auth:SigningKey`（至少 32 位）。
+2. 调用 `POST /api/auth/bootstrap-admin` 创建首个管理员（仅系统无用户时可调用）。
+3. 调用 `POST /api/auth/login` 获取 `accessToken`。
+4. 后续请求在 Header 中带上 `Authorization: Bearer <accessToken>`。
+5. 前端已实现本地 token 持久化和自动附带鉴权头；token 失效会自动回到登录态。
 
 ## 后端日志（NLog）
 
@@ -121,6 +132,14 @@ npm run dev
 
 ## 主要接口
 
+- `GET /api/auth/bootstrap-status`
+  - 返回是否允许初始化管理员
+- `POST /api/auth/bootstrap-admin`
+  - body: `{ "setupToken": "...", "username": "...", "password": "..." }`
+- `POST /api/auth/login`
+  - body: `{ "username": "...", "password": "..." }`
+- `GET /api/auth/me`
+  - 获取当前登录用户信息（需 Bearer）
 - `POST /api/sync/steam`
   - body: `{ "steamId": "...", "apiKey": "...", "accountName": "..." }`
 - `POST /api/sync/epic`
@@ -142,3 +161,4 @@ npm run dev
 - 已填写的账号信息、登录信息、库存数据全部保存到 MySQL。
 - 后端通过 EF Core ORM 访问数据库，不在业务代码中执行手写 SQL。
 - 账号凭证目前按明文写库（接口返回时做掩码）。生产环境建议改为应用层加密或 KMS 托管密钥。
+- `Auth:SigningKey`、`Auth:BootstrapToken` 必须使用环境变量或安全配置中心托管，禁止写死到公开仓库。

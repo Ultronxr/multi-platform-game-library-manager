@@ -180,12 +180,31 @@
 - 调整：`AGENTS.md`
 - 说明：新增“关键代码必须添加中文注释”的强制要求，并明确注释需解释核心意图与边界条件。
 
+27. 2026-02-28 17:55:26 +08:00
+- 变更：前后端新增用户登录鉴权并补齐数据库设计
+- 新增：
+  - `backend/Controllers/AuthController.cs`
+  - `backend/Data/Entities/AppUserEntity.cs`
+  - `backend/Models/AuthModels.cs`
+  - `backend/Services/AuthOptions.cs`
+  - `backend/Services/PasswordHashService.cs`
+  - `backend/Services/JwtTokenService.cs`
+- 调整：
+  - `backend/Program.cs`（JWT 中间件、全局授权策略、Swagger Bearer 配置）
+  - `backend/Controllers/LibraryController.cs`、`backend/Controllers/SyncController.cs`、`backend/Controllers/HealthController.cs`
+  - `backend/appsettings.json`、`backend/appsettings.Development.json`（新增 `Auth` 配置段）
+  - `backend/sql/001_init_schema.sql`、`backend/sql/002_backend_queries.sql`（新增 `app_users` 表与认证参考 SQL）
+  - `frontend/src/api.ts`、`frontend/src/types.ts`、`frontend/src/App.vue`、`frontend/src/style.css`（登录态、token 持久化、Bearer 自动附带）
+  - `README.md`（新增鉴权部署与使用说明）
+- 说明：实现“未登录不可访问业务接口”，支持首次 bootstrap 管理员、登录获取 JWT、前端登录后再使用库存同步与查询。
+
 ## 2. 当前最终状态（截至本文件生成）
 
 - 项目根目录：`multi-platform-game-library-manager`
 - 后端 API 组织方式：Controller 模式
 - 数据访问方式：EF Core ORM
 - 数据库目标版本：MySQL 5.7.44
+- 鉴权方案：JWT + `app_users` 用户表（PBKDF2 密码哈希，接口默认需登录）
 - 发布方式：支持跨平台自包含单文件发布（优先 Ubuntu `linux-x64`）
 - 日志方案：NLog（控制台 + 文件滚动）
 - 覆盖数据类型：

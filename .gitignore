@@ -3,6 +3,7 @@ backend/bin/
 backend/obj/
 backend/logs/
 backend/publish/
+backend/*.user
 frontend/node_modules/
 frontend/dist/
 frontend/*.tsbuildinfo

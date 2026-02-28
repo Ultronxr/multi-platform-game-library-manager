@@ -1,11 +1,13 @@
 using GameLibrary.Api.Models;
 using GameLibrary.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GameLibrary.Api.Controllers;
 
 [ApiController]
 [Route("api/sync")]
+[Authorize]
 public sealed class SyncController(
     IConfiguration configuration,
     SteamOwnedGamesClient steamClient,
