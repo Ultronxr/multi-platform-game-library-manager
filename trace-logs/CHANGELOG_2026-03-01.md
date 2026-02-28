@@ -71,3 +71,51 @@
   - `trace-logs/DEV_STATE.md`
   - `ARCHITECTURE.md`
 - 说明：按“按天拆分”规则将 2026-03-01 条目从 `CHANGELOG_2026-02-28.md` 迁移到当日日志，并补建开发状态文档以满足协作规范。
+
+6. 2026-03-01 02:06:14 +08:00
+- 变更：按代码规范执行全项目分层重构（后端 Service 化 + 前端 Pinia 化）
+- 新增：
+  - `backend/Services/AuthService.cs`
+  - `backend/Services/IAuthService.cs`
+  - `backend/Services/ISyncService.cs`
+  - `backend/Services/SyncService.cs`
+  - `backend/Services/ILibraryQueryService.cs`
+  - `backend/Services/LibraryQueryService.cs`
+  - `backend/Services/ServiceOperationResult.cs`
+  - `frontend/src/stores/authStore.ts`
+  - `frontend/src/stores/libraryStore.ts`
+  - `frontend/src/types/api.ts`
+- 调整：
+  - `backend/Controllers/AuthController.cs`
+  - `backend/Controllers/LibraryController.cs`
+  - `backend/Controllers/SyncController.cs`
+  - `backend/Models/AuthModels.cs`
+  - `backend/Program.cs`
+  - `frontend/src/App.vue`
+  - `frontend/src/api.ts`
+  - `frontend/src/main.ts`
+  - `frontend/package.json`
+  - `frontend/package-lock.json`
+  - `ARCHITECTURE.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 删除：
+  - `frontend/src/types.ts`
+- 说明：将 Controller 中业务逻辑下沉到 Service 层，统一服务结果模型；前端引入 Pinia 管理认证与库存状态，页面组件仅负责交互编排；构建与类型检查均通过。
+
+7. 2026-03-01 02:10:56 +08:00
+- 变更：补齐数据库建表字段注释
+- 调整：
+  - `backend/sql/001_init_schema.sql`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：对 `app_users`、`platform_accounts`、`owned_games` 三张表的每个字段补充 `COMMENT`，不改变字段类型与约束。
+
+8. 2026-03-01 02:18:35 +08:00
+- 变更：根据数据库规范重整 SQL 文件
+- 调整：
+  - `backend/sql/001_init_schema.sql`
+  - `backend/sql/002_backend_queries.sql`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：统一 SQL 注释与结构化分段风格；`001_init_schema.sql` 在保留字段级 `COMMENT` 基础上补充表级 `COMMENT`，`002_backend_queries.sql` 明确为参考 DML/查询脚本并统一中文说明。

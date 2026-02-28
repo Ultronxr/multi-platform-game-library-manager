@@ -31,3 +31,17 @@ public sealed record AuthLoginResponse(
     DateTime ExpiresAtUtc,
     string Username,
     string Role);
+
+/// <summary>
+/// 当前登录用户信息。
+/// </summary>
+public sealed record CurrentUserResponse(
+    string Username,
+    string Role);
+
+/// <summary>
+/// 初始化管理员可用状态。
+/// </summary>
+public sealed record BootstrapStatusResponse(
+    bool HasAnyUser,
+    bool BootstrapEnabled);

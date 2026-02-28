@@ -1,6 +1,6 @@
 # 项目架构文档
 
-> 更新时间：2026-03-01 01:45:37 +08:00
+> 更新时间：2026-03-01 02:06:14 +08:00
 
 ## 1. 总览
 
@@ -49,14 +49,21 @@ multi-platform-game-library-manager/
 │  │  ├─ publish-self-contained.ps1    # PowerShell 自包含发布脚本
 │  │  └─ publish-self-contained.sh     # Bash 自包含发布脚本
 │  ├─ Services/                        # 业务服务层与外部平台客户端
+│  │  ├─ AuthService.cs                # 认证业务实现（登录、初始化管理员、创建用户）
 │  │  ├─ AuthOptions.cs                # 鉴权配置对象
 │  │  ├─ DuplicateDetector.cs          # 跨平台重复游戏检测服务
 │  │  ├─ EfCoreGameLibraryStore.cs     # 基于 EF Core 的库存存储实现
 │  │  ├─ EpicLibraryClient.cs          # Epic 库存拉取客户端
+│  │  ├─ IAuthService.cs               # 认证业务接口抽象
+│  │  ├─ ILibraryQueryService.cs       # 库存查询服务接口抽象
 │  │  ├─ IGameLibraryStore.cs          # 库存存储接口抽象
+│  │  ├─ ISyncService.cs               # 平台同步服务接口抽象
 │  │  ├─ JwtTokenService.cs            # JWT 访问令牌生成服务
+│  │  ├─ LibraryQueryService.cs        # 库存查询实现（聚合库存与重复检测）
 │  │  ├─ PasswordHashService.cs        # 密码哈希与校验服务
+│  │  ├─ ServiceOperationResult.cs     # 服务层标准结果模型
 │  │  ├─ SteamOwnedGamesClient.cs      # Steam 库存拉取客户端
+│  │  ├─ SyncService.cs                # 平台同步业务实现（Steam/Epic）
 │  │  ├─ SyncResult.cs                 # 同步结果包装模型
 │  │  └─ TitleNormalizer.cs            # 游戏名归一化工具
 │  ├─ sql/
@@ -75,8 +82,12 @@ multi-platform-game-library-manager/
 │  │  ├─ App.vue                       # 主界面：登录、同步、列表展示
 │  │  ├─ env.d.ts                      # Vite 环境变量类型声明
 │  │  ├─ main.ts                       # 前端入口与挂载
+│  │  ├─ stores/
+│  │  │  ├─ authStore.ts               # 认证状态管理（Pinia）
+│  │  │  └─ libraryStore.ts            # 库存状态管理（Pinia）
 │  │  ├─ style.css                     # 全局样式
-│  │  └─ types.ts                      # 前端业务类型定义
+│  │  └─ types/
+│  │     └─ api.ts                     # 前端业务类型定义
 │  ├─ .env.example                     # 前端环境变量示例
 │  ├─ index.html                       # Vite 页面模板
 │  ├─ package-lock.json                # npm 锁文件
@@ -98,6 +109,7 @@ multi-platform-game-library-manager/
 - `Data`：负责 EF Core 实体映射与数据库访问。
 - `Models`：用于 API 输入输出和领域数据传递。
 - `frontend/src/api.ts`：作为前端唯一接口访问出口，集中处理 token、错误与基础请求逻辑。
+- `frontend/src/stores`：基于 Pinia 管理认证态与库存态，避免页面组件承载复杂状态流程。
 
 ## 4. 维护规则
 

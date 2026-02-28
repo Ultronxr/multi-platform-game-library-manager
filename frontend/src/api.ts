@@ -8,7 +8,7 @@ import type {
   LoginRequest,
   SavedAccount,
   SteamSyncRequest
-} from "./types";
+} from "./types/api";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5119";
 const ACCESS_TOKEN_STORAGE_KEY = "game_library_access_token";

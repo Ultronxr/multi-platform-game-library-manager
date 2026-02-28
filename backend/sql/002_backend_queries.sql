@@ -1,8 +1,8 @@
 -- ------------------------------------------------------------
--- SQL reference for MySQL 5.7.44 schema/data operations
+-- MySQL 5.7.44 后端常用参考 SQL（仅 DML/查询，不包含建表 DDL）
 -- ------------------------------------------------------------
 
--- 1) Upsert account + credential
+-- 1) 平台账号与凭证信息 Upsert
 INSERT INTO platform_accounts (
   platform,
   account_name,
@@ -27,11 +27,11 @@ ON DUPLICATE KEY UPDATE
   last_synced_at = VALUES(last_synced_at),
   updated_at = UTC_TIMESTAMP(6);
 
--- 2) Delete existing inventory for an account (full refresh)
+-- 2) 删除账号历史库存（全量刷新前清空）
 DELETE FROM owned_games
 WHERE account_id = @accountId;
 
--- 3) Insert one owned game row
+-- 3) 插入单条已拥有游戏记录
 INSERT INTO owned_games (
   account_id,
   platform,
@@ -51,7 +51,7 @@ VALUES (
   @syncedAt
 );
 
--- 4) Query all games
+-- 4) 查询全部游戏库存
 SELECT
   platform,
   account_name,
@@ -61,7 +61,7 @@ SELECT
 FROM owned_games
 ORDER BY title ASC;
 
--- 5) Query all saved platform accounts
+-- 5) 查询已保存平台账号
 SELECT
   id,
   platform,
@@ -75,11 +75,11 @@ SELECT
 FROM platform_accounts
 ORDER BY platform ASC, account_name ASC;
 
--- 6) Check whether bootstrap-admin is still available
+-- 6) 检查是否仍可执行 bootstrap-admin
 SELECT COUNT(1) AS user_count
 FROM app_users;
 
--- 7) Query active user by username (login)
+-- 7) 按用户名查询可登录用户
 SELECT
   id,
   username,
@@ -93,7 +93,7 @@ FROM app_users
 WHERE username = @username
 LIMIT 1;
 
--- 8) Insert admin/user account
+-- 8) 新增管理员/普通用户
 INSERT INTO app_users (
   username,
   password_hash,
@@ -107,7 +107,7 @@ VALUES (
   1
 );
 
--- 9) Update user login timestamp
+-- 9) 更新用户最近登录时间
 UPDATE app_users
 SET
   last_login_at = UTC_TIMESTAMP(6),
