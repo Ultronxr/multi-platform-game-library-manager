@@ -10,13 +10,9 @@ import {
   SyncOutlined,
   UserOutlined
 } from "@ant-design/icons-vue";
-import type { OwnedGame, SavedAccount } from "./types/gameLibrary";
+import type { LibraryGameListItem, SavedAccount } from "./types/gameLibrary";
 import { useAuthStore } from "./stores/authStore";
 import { useLibraryStore } from "./stores/libraryStore";
-
-type InventoryGameRow = OwnedGame & {
-  accountExternalId: string;
-};
 
 const authStore = useAuthStore();
 const libraryStore = useLibraryStore();
@@ -30,7 +26,18 @@ const {
   errorMessage,
   isAuthenticated
 } = storeToRefs(authStore);
-const { library, accounts, loading, syncingSteam, syncingEpic, hasDuplicates } = storeToRefs(libraryStore);
+const {
+  library,
+  accounts,
+  loading,
+  pagedGames,
+  gamesLoading,
+  gamesTotalCount,
+  gamesQuery,
+  syncingSteam,
+  syncingEpic,
+  hasDuplicates
+} = storeToRefs(libraryStore);
 
 const loginForm = reactive({
   username: "",
@@ -91,58 +98,21 @@ const gameTableColumns = [
 ];
 const gamePlatformOptions = computed(() => {
   const options = new Set<string>();
-  for (const game of library.value?.games ?? []) {
-    options.add(game.platform);
+  for (const account of accounts.value) {
+    options.add(account.platform);
   }
 
   return [...options]
     .sort((a, b) => a.localeCompare(b))
     .map((platform) => ({ label: platform, value: platform }));
 });
-const accountExternalIdByKey = computed(() => {
-  const mapping = new Map<string, string>();
-  for (const account of accounts.value) {
-    const key = `${account.platform}|${account.accountName}`;
-    mapping.set(key, account.externalAccountId?.trim() || "-");
-  }
-
-  return mapping;
-});
-const allGamesForView = computed<InventoryGameRow[]>(() =>
-  (library.value?.games ?? []).map((game) => {
-    const key = `${game.platform}|${game.accountName}`;
-    return {
-      ...game,
-      accountExternalId: accountExternalIdByKey.value.get(key) ?? "-"
-    };
-  })
-);
-const filteredGames = computed<InventoryGameRow[]>(() => {
-  const gameTitleKeyword = inventoryFilters.gameTitle.trim().toLowerCase();
-  const accountNameKeyword = inventoryFilters.accountName.trim().toLowerCase();
-  const accountIdKeyword = inventoryFilters.accountExternalId.trim().toLowerCase();
-  const platformFilter = inventoryFilters.platform;
-
-  return allGamesForView.value.filter((game) => {
-    if (platformFilter && game.platform !== platformFilter) {
-      return false;
-    }
-
-    if (gameTitleKeyword && !game.title.toLowerCase().includes(gameTitleKeyword)) {
-      return false;
-    }
-
-    if (accountNameKeyword && !game.accountName.toLowerCase().includes(accountNameKeyword)) {
-      return false;
-    }
-
-    if (accountIdKeyword && !game.accountExternalId.toLowerCase().includes(accountIdKeyword)) {
-      return false;
-    }
-
-    return true;
-  });
-});
+const gameTablePagination = computed(() => ({
+  current: gamesQuery.value.pageNumber,
+  pageSize: gamesQuery.value.pageSize,
+  total: gamesTotalCount.value,
+  showSizeChanger: true,
+  showTotal: (total: number) => `共 ${total} 条`
+}));
 
 /**
  * 退出登录并清理页面数据。
@@ -286,18 +256,49 @@ async function onDeleteAccount(account: SavedAccount): Promise<void> {
  * 生成库存行主键，避免同名游戏冲突。
  * @param game 游戏记录。
  */
-function gameRowKey(game: OwnedGame): string {
+function gameRowKey(game: LibraryGameListItem): string {
   return `${game.platform}-${game.accountName}-${game.externalId}`;
 }
 
 /**
- * 重置库存筛选条件。
+ * 按当前筛选条件加载库存分页数据。
+ * @param pageNumber 目标页码。
+ * @param pageSize 每页条数。
  */
-function clearInventoryFilters(): void {
+async function applyInventoryFilters(
+  pageNumber = gamesQuery.value.pageNumber,
+  pageSize = gamesQuery.value.pageSize
+): Promise<void> {
+  await libraryStore.loadLibraryGamesPage({
+    pageNumber,
+    pageSize,
+    gameTitle: inventoryFilters.gameTitle.trim() || undefined,
+    platform: inventoryFilters.platform,
+    accountName: inventoryFilters.accountName.trim() || undefined,
+    accountExternalId: inventoryFilters.accountExternalId.trim() || undefined
+  });
+}
+
+/**
+ * 重置库存筛选条件并回到第一页。
+ */
+async function clearInventoryFilters(): Promise<void> {
   inventoryFilters.gameTitle = "";
   inventoryFilters.platform = undefined;
   inventoryFilters.accountName = "";
   inventoryFilters.accountExternalId = "";
+  await applyInventoryFilters(1, gamesQuery.value.pageSize);
+}
+
+/**
+ * 库存表格分页回调（后端分页）。
+ * @param pagination 分页参数。
+ */
+async function onGameTableChange(pagination: { current?: number; pageSize?: number }): Promise<void> {
+  await applyInventoryFilters(
+    pagination.current ?? 1,
+    pagination.pageSize ?? gamesQuery.value.pageSize
+  );
 }
 
 /**
@@ -540,22 +541,24 @@ onMounted(async () => {
         </div>
         <div class="inventory-filter-meta">
           <a-tag color="processing">
-            筛选结果：{{ filteredGames.length }} / {{ allGamesForView.length }}
+            筛选结果：{{ pagedGames.length }} / {{ gamesTotalCount }}
           </a-tag>
-          <a-button @click="clearInventoryFilters">重置筛选</a-button>
+          <a-space>
+            <a-button type="primary" @click="applyInventoryFilters(1, gamesQuery.pageSize)">
+              应用筛选
+            </a-button>
+            <a-button @click="clearInventoryFilters">重置筛选</a-button>
+          </a-space>
         </div>
         <a-table
           :columns="gameTableColumns"
-          :data-source="filteredGames"
-          :loading="loading"
-          :pagination="{
-            pageSize: 20,
-            showSizeChanger: true,
-            showTotal: (total: number) => `共 ${total} 条`
-          }"
+          :data-source="pagedGames"
+          :loading="gamesLoading"
+          :pagination="gameTablePagination"
           :scroll="{ x: 900 }"
           size="middle"
           :row-key="gameRowKey"
+          @change="onGameTableChange"
         />
       </a-card>
     </template>

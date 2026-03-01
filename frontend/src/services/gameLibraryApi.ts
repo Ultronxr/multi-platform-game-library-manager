@@ -4,6 +4,8 @@ import type {
   BootstrapStatusResponse,
   CurrentUserResponse,
   EpicSyncRequest,
+  LibraryGamesPageResponse,
+  LibraryGamesQuery,
   LibraryResponse,
   LoginRequest,
   SavedAccount,
@@ -150,6 +152,42 @@ export async function fetchCurrentUser(): Promise<CurrentUserResponse> {
  */
 export async function fetchLibrary(): Promise<LibraryResponse> {
   return request<LibraryResponse>("/api/library");
+}
+
+/**
+ * 获取库存聚合信息。
+ * @param includeGames 是否返回全部库存明细。
+ */
+export async function fetchLibrarySummary(includeGames: boolean): Promise<LibraryResponse> {
+  return request<LibraryResponse>(`/api/library?includeGames=${includeGames ? "true" : "false"}`);
+}
+
+/**
+ * 分页查询库存明细。
+ * @param query 分页与筛选参数。
+ */
+export async function fetchLibraryGamesPage(query: LibraryGamesQuery): Promise<LibraryGamesPageResponse> {
+  const params = new URLSearchParams();
+  params.set("pageNumber", String(query.pageNumber));
+  params.set("pageSize", String(query.pageSize));
+
+  if (query.gameTitle) {
+    params.set("gameTitle", query.gameTitle);
+  }
+
+  if (query.platform) {
+    params.set("platform", query.platform);
+  }
+
+  if (query.accountName) {
+    params.set("accountName", query.accountName);
+  }
+
+  if (query.accountExternalId) {
+    params.set("accountExternalId", query.accountExternalId);
+  }
+
+  return request<LibraryGamesPageResponse>(`/api/library/games?${params.toString()}`);
 }
 
 /**

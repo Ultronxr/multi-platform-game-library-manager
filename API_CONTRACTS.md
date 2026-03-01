@@ -1,6 +1,6 @@
 # API 契约文档
 
-> 更新时间：2026-03-01 11:18:44 +08:00
+> 更新时间：2026-03-01 11:57:14 +08:00
 >
 > 服务端项目：`backend/GameLibrary.Api.csproj`
 
@@ -72,6 +72,26 @@
     {
       "normalizedTitle": "string",
       "games": []
+    }
+  ]
+}
+```
+
+`LibraryGamesPageResponse`
+
+```json
+{
+  "pageNumber": 1,
+  "pageSize": 20,
+  "totalCount": 256,
+  "items": [
+    {
+      "externalId": "string",
+      "title": "string",
+      "platform": "Steam",
+      "accountName": "string",
+      "accountExternalId": "7656119...",
+      "syncedAtUtc": "2026-03-01 08:00:00"
     }
   ]
 }
@@ -288,13 +308,34 @@
 ### GET `/api/library`
 
 - 鉴权：是
-- 说明：返回全部库存及跨平台重复组
-- 排序：`games` 按 `title` 升序（不区分大小写）
+- 说明：返回库存汇总与跨平台重复组
+- 查询参数：`includeGames`（可选，默认 `true`）；为 `false` 时仅返回汇总与重复组，`games` 为空列表
 
 `200 OK`：返回 `LibraryResponse`
 
 错误码：
 
+- `401`：未登录或 token 失效
+
+### GET `/api/library/games`
+
+- 鉴权：是
+- 说明：按条件分页查询库存明细（后端分页）
+
+查询参数：
+
+- `pageNumber`：页码（>=1，默认 `1`）
+- `pageSize`：每页条数（`1-100`，默认 `20`）
+- `gameTitle`：游戏名模糊匹配（可选）
+- `platform`：平台过滤（可选，`Steam`/`Epic`）
+- `accountName`：账号名称模糊匹配（可选）
+- `accountExternalId`：账号 ID 模糊匹配（可选）
+
+`200 OK`：返回 `LibraryGamesPageResponse`
+
+错误码：
+
+- `400`：查询参数不合法（如 `platform` 非法）
 - `401`：未登录或 token 失效
 
 ### GET `/api/accounts`
@@ -407,6 +448,8 @@
 - `login` -> `POST /api/auth/login`
 - `fetchCurrentUser` -> `GET /api/auth/me`
 - `fetchLibrary` -> `GET /api/library`
+- `fetchLibrarySummary` -> `GET /api/library?includeGames=false`
+- `fetchLibraryGamesPage` -> `GET /api/library/games`
 - `fetchAccounts` -> `GET /api/accounts`
 - `resyncSavedAccount` -> `POST /api/accounts/{accountId}/resync`
 - `updateSavedAccount` -> `PUT /api/accounts/{accountId}`

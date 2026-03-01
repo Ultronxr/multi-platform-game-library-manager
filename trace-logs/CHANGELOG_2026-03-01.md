@@ -252,3 +252,21 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：在“全部库存”区域新增筛选栏，采用“文本模糊查询 + 平台下拉选择”组合；筛选维度包含游戏名称、平台、账号名称、账号ID，并显示筛选结果计数与一键重置。
+
+18. 2026-03-01 11:57:14 +08:00
+- 变更：库存列表切换为后端分页（替代前端分页）
+- 新增：
+  - `backend/Models/LibraryGamePageModels.cs`
+- 调整：
+  - `backend/Controllers/LibraryController.cs`
+  - `backend/Services/Library/ILibraryQueryService.cs`
+  - `backend/Services/Library/LibraryQueryService.cs`
+  - `frontend/src/services/gameLibraryApi.ts`
+  - `frontend/src/stores/libraryStore.ts`
+  - `frontend/src/types/gameLibrary.ts`
+  - `frontend/src/App.vue`
+  - `API_CONTRACTS.md`
+  - `ARCHITECTURE.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：新增 `/api/library/games` 后端分页接口，并在 `/api/library` 增加 `includeGames` 控制摘要返回；前端库存表改为服务端分页与筛选参数联动，避免全量数据在前端分页。

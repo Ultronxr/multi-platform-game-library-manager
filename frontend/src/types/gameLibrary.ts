@@ -8,6 +8,10 @@ export interface OwnedGame {
   syncedAtUtc: string;
 }
 
+export interface LibraryGameListItem extends OwnedGame {
+  accountExternalId?: string | null;
+}
+
 export interface DuplicateGroup {
   normalizedTitle: string;
   games: OwnedGame[];
@@ -18,6 +22,22 @@ export interface LibraryResponse {
   duplicateGroups: number;
   games: OwnedGame[];
   duplicates: DuplicateGroup[];
+}
+
+export interface LibraryGamesQuery {
+  gameTitle?: string;
+  platform?: string;
+  accountName?: string;
+  accountExternalId?: string;
+  pageNumber: number;
+  pageSize: number;
+}
+
+export interface LibraryGamesPageResponse {
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  items: LibraryGameListItem[];
 }
 
 export interface SavedAccount {

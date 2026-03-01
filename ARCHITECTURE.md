@@ -1,6 +1,6 @@
 # 项目架构文档
 
-> 更新时间：2026-03-01 11:36:27 +08:00
+> 更新时间：2026-03-01 11:57:14 +08:00
 
 ## 1. 总览
 
@@ -40,6 +40,7 @@ multi-platform-game-library-manager/
 │  │  ├─ AccountManagementModels.cs    # 已保存账号编辑请求模型
 │  │  ├─ AuthModels.cs                 # 认证请求/响应模型
 │  │  ├─ GamePlatform.cs               # 平台枚举（Steam/Epic）
+│  │  ├─ LibraryGamePageModels.cs      # 库存分页查询请求与响应模型
 │  │  ├─ LibraryResponse.cs            # 库存聚合响应模型与重复组模型
 │  │  ├─ OwnedGame.cs                  # 已拥有游戏模型
 │  │  ├─ SavedAccount.cs               # 已保存账号展示模型

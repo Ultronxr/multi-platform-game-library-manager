@@ -30,13 +30,31 @@ public sealed class LibraryController(
     /// <summary>
     /// 查询完整游戏库及重复组信息。
     /// </summary>
+    /// <param name="includeGames">是否包含全部库存明细。</param>
     /// <param name="cancellationToken">取消令牌。</param>
     /// <returns>库存聚合结果。</returns>
     [HttpGet("library")]
-    public async Task<IActionResult> GetLibraryAsync(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetLibraryAsync(
+        [FromQuery] bool? includeGames,
+        CancellationToken cancellationToken)
     {
-        var library = await libraryQueryService.GetLibraryAsync(cancellationToken);
+        var library = await libraryQueryService.GetLibraryAsync(includeGames ?? true, cancellationToken);
         return Ok(library);
+    }
+
+    /// <summary>
+    /// 分页查询库存明细。
+    /// </summary>
+    /// <param name="request">分页与筛选参数。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>库存分页结果。</returns>
+    [HttpGet("library/games")]
+    public async Task<IActionResult> GetLibraryGamesPageAsync(
+        [FromQuery] LibraryGamesQueryRequest request,
+        CancellationToken cancellationToken)
+    {
+        var page = await libraryQueryService.GetLibraryGamesPageAsync(request, cancellationToken);
+        return Ok(page);
     }
 
     /// <summary>

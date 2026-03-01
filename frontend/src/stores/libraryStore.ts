@@ -4,7 +4,8 @@ import {
   ApiError,
   deleteSavedAccount as deleteSavedAccountApi,
   fetchAccounts,
-  fetchLibrary,
+  fetchLibraryGamesPage,
+  fetchLibrarySummary,
   resyncSavedAccount as resyncSavedAccountApi,
   syncEpic as syncEpicApi,
   syncSteam as syncSteamApi,
@@ -12,6 +13,8 @@ import {
 } from "../services/gameLibraryApi";
 import type {
   EpicSyncRequest,
+  LibraryGameListItem,
+  LibraryGamesQuery,
   LibraryResponse,
   SavedAccount,
   SteamSyncRequest,
@@ -28,6 +31,13 @@ export const useLibraryStore = defineStore("library", () => {
   const library = ref<LibraryResponse | null>(null);
   const accounts = ref<SavedAccount[]>([]);
   const loading = ref(false);
+  const pagedGames = ref<LibraryGameListItem[]>([]);
+  const gamesLoading = ref(false);
+  const gamesTotalCount = ref(0);
+  const gamesQuery = ref<LibraryGamesQuery>({
+    pageNumber: 1,
+    pageSize: 20
+  });
   const syncingSteam = ref(false);
   const syncingEpic = ref(false);
   const accountActionLoadingIds = ref<number[]>([]);
@@ -40,6 +50,12 @@ export const useLibraryStore = defineStore("library", () => {
   function resetLibraryData(): void {
     library.value = null;
     accounts.value = [];
+    pagedGames.value = [];
+    gamesTotalCount.value = 0;
+    gamesQuery.value = {
+      pageNumber: 1,
+      pageSize: 20
+    };
   }
 
   /**
@@ -92,11 +108,43 @@ export const useLibraryStore = defineStore("library", () => {
 
     loading.value = true;
     try {
-      library.value = await fetchLibrary();
+      library.value = await fetchLibrarySummary(false);
     } catch (error) {
       handleApiError(error);
     } finally {
       loading.value = false;
+    }
+  }
+
+  /**
+   * 分页加载库存明细。
+   * @param query 分页与筛选参数（可选，未传时使用上次查询条件）。
+   */
+  async function loadLibraryGamesPage(query?: Partial<LibraryGamesQuery>): Promise<void> {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      return;
+    }
+
+    gamesQuery.value = {
+      ...gamesQuery.value,
+      ...query
+    };
+
+    gamesLoading.value = true;
+    try {
+      const page = await fetchLibraryGamesPage(gamesQuery.value);
+      pagedGames.value = page.items;
+      gamesTotalCount.value = page.totalCount;
+      gamesQuery.value = {
+        ...gamesQuery.value,
+        pageNumber: page.pageNumber,
+        pageSize: page.pageSize
+      };
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      gamesLoading.value = false;
     }
   }
 
@@ -120,7 +168,7 @@ export const useLibraryStore = defineStore("library", () => {
    * 并行刷新库存与账号数据。
    */
   async function loadProtectedData(): Promise<void> {
-    await Promise.all([loadLibrary(), loadAccounts()]);
+    await Promise.all([loadLibrary(), loadAccounts(), loadLibraryGamesPage()]);
   }
 
   /**
@@ -266,12 +314,17 @@ export const useLibraryStore = defineStore("library", () => {
     library,
     accounts,
     loading,
+    pagedGames,
+    gamesLoading,
+    gamesTotalCount,
+    gamesQuery,
     syncingSteam,
     syncingEpic,
     accountActionLoadingIds,
     hasDuplicates,
     resetLibraryData,
     loadLibrary,
+    loadLibraryGamesPage,
     loadAccounts,
     loadProtectedData,
     syncSteam,
