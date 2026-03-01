@@ -340,3 +340,11 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：`ResolveTitle` 增加 `sandboxName` 最高优先级（同时覆盖顶层、`metadata`、`catalogItem` 三个层级），确保 Epic 返回记录中优先使用 `sandboxName` 作为游戏名称。
+
+27. 2026-03-01 16:12:26 +08:00
+- 变更：修复 Epic 库存接口分页拉取不完整问题
+- 调整：
+  - `backend/Services/Sync/EpicLibraryClient.cs`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：`GetOwnedGamesAsync` 改为按 `responseMetadata.nextCursor` 循环翻页拉取，并传递 `stateToken`；新增游标防死循环保护与 `externalId` 去重，避免只取首屏导致库存缺失。

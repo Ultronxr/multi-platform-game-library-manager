@@ -10,6 +10,9 @@ public sealed class EpicLibraryClient(
     HttpClient httpClient,
     ILogger<EpicLibraryClient> logger)
 {
+    private const string EpicLibraryItemsUrl =
+        "https://library-service.live.use1a.on.epicgames.com/library/api/public/items";
+
     /// <summary>
     /// 调用 Epic 库存接口获取账号已拥有游戏。
     /// </summary>
@@ -18,43 +21,85 @@ public sealed class EpicLibraryClient(
     /// <returns>同步结果。</returns>
     public async Task<SyncResult> GetOwnedGamesAsync(string accessToken, CancellationToken cancellationToken)
     {
-        const string url =
-            "https://library-service.live.use1a.on.epicgames.com/library/api/public/items?includeMetadata=true";
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-
         try
         {
-            using var response = await httpClient.SendAsync(request, cancellationToken);
-            var rawContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            logger.LogDebug(
-                "Epic API 响应：Url={Url}; StatusCode={StatusCode}; ReasonPhrase={ReasonPhrase}; Body={Body}",
-                url,
-                (int)response.StatusCode,
-                response.ReasonPhrase,
-                rawContent);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return SyncResult.Failure($"Epic library request failed: {(int)response.StatusCode} {response.ReasonPhrase}");
-            }
-
-            using var json = JsonDocument.Parse(rawContent);
-
-            var items = ExtractItems(json.RootElement);
+            var pageNumber = 1;
+            string? nextCursor = null;
+            string? stateToken = null;
             var games = new List<OwnedGame>();
-            foreach (var item in items)
+            var uniqueExternalIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            while (true)
             {
-                var title = ResolveTitle(item);
-                if (string.IsNullOrWhiteSpace(title))
+                var requestUrl = BuildItemsUrl(nextCursor, stateToken);
+                using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+                request.Headers.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                using var response = await httpClient.SendAsync(request, cancellationToken);
+                var rawContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                logger.LogDebug(
+                    "Epic API 响应：Page={Page}; Url={Url}; StatusCode={StatusCode}; ReasonPhrase={ReasonPhrase}; Body={Body}",
+                    pageNumber,
+                    requestUrl,
+                    (int)response.StatusCode,
+                    response.ReasonPhrase,
+                    rawContent);
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    continue;
+                    return SyncResult.Failure($"Epic library request failed: {(int)response.StatusCode} {response.ReasonPhrase}");
                 }
 
-                var externalId = ResolveId(item) ?? title;
-                games.Add(new OwnedGame(externalId, title, GamePlatform.Epic, string.Empty, DateTime.UtcNow));
-            }
+                using var json = JsonDocument.Parse(rawContent);
+                var items = ExtractItems(json.RootElement);
+                var addedCount = 0;
+                foreach (var item in items)
+                {
+                    var title = ResolveTitle(item);
+                    if (string.IsNullOrWhiteSpace(title))
+                    {
+                        continue;
+                    }
+
+                    var externalId = ResolveId(item) ?? title;
+                    if (!uniqueExternalIds.Add(externalId))
+                    {
+                        continue;
+                    }
+
+                    games.Add(new OwnedGame(externalId, title, GamePlatform.Epic, string.Empty, DateTime.UtcNow));
+                    addedCount++;
+                }
+
+                var responseStateToken = ResolveStateToken(json.RootElement);
+                var responseNextCursor = ResolveNextCursor(json.RootElement);
+                logger.LogDebug(
+                    "Epic API 分页状态：Page={Page}; AddedCount={AddedCount}; TotalCount={TotalCount}; NextCursor={NextCursor}; StateToken={StateToken}",
+                    pageNumber,
+                    addedCount,
+                    games.Count,
+                    responseNextCursor ?? string.Empty,
+                    responseStateToken ?? string.Empty);
+
+                if (string.IsNullOrWhiteSpace(responseNextCursor))
+                {
+                    break;
+                }
+
+                if (string.Equals(responseNextCursor, nextCursor, StringComparison.Ordinal))
+                {
+                    logger.LogWarning(
+                        "Epic API 分页游标未推进，提前停止以避免死循环。Page={Page}; Cursor={Cursor}",
+                        pageNumber,
+                        responseNextCursor);
+                    break;
+                }
+
+                nextCursor = responseNextCursor;
+                stateToken = string.IsNullOrWhiteSpace(responseStateToken) ? stateToken : responseStateToken;
+                pageNumber++;
+            }            
 
             return SyncResult.Success(games);
         }
@@ -63,10 +108,63 @@ public sealed class EpicLibraryClient(
             logger.LogDebug(
                 ex,
                 "Epic API 请求异常：Url={Url}; Error={Error}",
-                url,
+                EpicLibraryItemsUrl,
                 ex.Message);
             throw;
         }
+    }
+
+    private static string BuildItemsUrl(string? cursor, string? stateToken)
+    {
+        var queryItems = new List<string> { "includeMetadata=true" };
+        if (!string.IsNullOrWhiteSpace(cursor))
+        {
+            queryItems.Add($"cursor={Uri.EscapeDataString(cursor)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(stateToken))
+        {
+            queryItems.Add($"stateToken={Uri.EscapeDataString(stateToken)}");
+        }
+
+        return $"{EpicLibraryItemsUrl}?{string.Join("&", queryItems)}";
+    }
+
+    private static string? ResolveNextCursor(JsonElement root)
+    {
+        if (!TryReadResponseMetadata(root, out var responseMetadata))
+        {
+            return null;
+        }
+
+        return ReadString(responseMetadata, "nextCursor");
+    }
+
+    private static string? ResolveStateToken(JsonElement root)
+    {
+        if (!TryReadResponseMetadata(root, out var responseMetadata))
+        {
+            return null;
+        }
+
+        return ReadString(responseMetadata, "stateToken");
+    }
+
+    private static bool TryReadResponseMetadata(JsonElement root, out JsonElement responseMetadata)
+    {
+        responseMetadata = default;
+        if (root.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        if (!root.TryGetProperty("responseMetadata", out responseMetadata) ||
+            responseMetadata.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private static IEnumerable<JsonElement> ExtractItems(JsonElement root)
