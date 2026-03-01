@@ -7,7 +7,8 @@ import type {
   LibraryResponse,
   LoginRequest,
   SavedAccount,
-  SteamSyncRequest
+  SteamSyncRequest,
+  UpdateSavedAccountRequest
 } from "../types/gameLibrary";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5119";
@@ -156,6 +157,41 @@ export async function fetchLibrary(): Promise<LibraryResponse> {
  */
 export async function fetchAccounts(): Promise<SavedAccount[]> {
   return request<SavedAccount[]>("/api/accounts");
+}
+
+/**
+ * 使用已保存凭证重新拉取指定账号库存。
+ * @param accountId 账号主键。
+ */
+export async function resyncSavedAccount(accountId: number): Promise<void> {
+  await request<{ syncedCount: number }>(`/api/accounts/${accountId}/resync`, {
+    method: "POST"
+  });
+}
+
+/**
+ * 更新已保存账号信息。
+ * @param accountId 账号主键。
+ * @param payload 更新参数。
+ */
+export async function updateSavedAccount(
+  accountId: number,
+  payload: UpdateSavedAccountRequest
+): Promise<void> {
+  await request<{ message: string }>(`/api/accounts/${accountId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
+
+/**
+ * 删除已保存账号及其关联库存。
+ * @param accountId 账号主键。
+ */
+export async function deleteSavedAccount(accountId: number): Promise<void> {
+  await request<{ message: string }>(`/api/accounts/${accountId}`, {
+    method: "DELETE"
+  });
 }
 
 /**

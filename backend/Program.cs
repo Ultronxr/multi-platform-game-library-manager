@@ -124,6 +124,7 @@ try
 
     builder.Services.AddScoped<IGameLibraryStore, EfCoreGameLibraryStore>();
     builder.Services.AddScoped<ILibraryQueryService, LibraryQueryService>();
+    builder.Services.AddScoped<IAccountManagementService, AccountManagementService>();
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<ISyncService, SyncService>();
     builder.Services.AddSingleton<DuplicateDetector>();

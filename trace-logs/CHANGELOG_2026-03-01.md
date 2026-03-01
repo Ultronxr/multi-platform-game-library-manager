@@ -210,3 +210,23 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：在 SQL 参考脚本新增“仅执行一次”的历史时间字段整体 `+8` 小时迁移事务，避免存量数据与新入库 UTC+8 规则混用。
+
+15. 2026-03-01 11:18:44 +08:00
+- 变更：新增已保存账号的一键重拉、修改、删除能力（前后端联动）
+- 新增：
+  - `backend/Models/AccountManagementModels.cs`
+  - `backend/Services/Library/IAccountManagementService.cs`
+  - `backend/Services/Library/AccountManagementService.cs`
+- 调整：
+  - `backend/Controllers/LibraryController.cs`
+  - `backend/Program.cs`
+  - `frontend/src/services/gameLibraryApi.ts`
+  - `frontend/src/stores/libraryStore.ts`
+  - `frontend/src/types/gameLibrary.ts`
+  - `frontend/src/App.vue`
+  - `frontend/src/style.css`
+  - `API_CONTRACTS.md`
+  - `ARCHITECTURE.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：后端新增 `/api/accounts/{id}/resync|PUT|DELETE` 接口，支持使用已保存凭证重拉库存、编辑账号信息（含凭证）与删除账号（级联删除库存）；前端在账号表格新增“重拉库存/修改/删除”操作列并接入 Pinia 状态流。

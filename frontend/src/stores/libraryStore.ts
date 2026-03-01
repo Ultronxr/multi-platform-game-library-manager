@@ -2,12 +2,21 @@ import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import {
   ApiError,
+  deleteSavedAccount as deleteSavedAccountApi,
   fetchAccounts,
   fetchLibrary,
+  resyncSavedAccount as resyncSavedAccountApi,
   syncEpic as syncEpicApi,
-  syncSteam as syncSteamApi
+  syncSteam as syncSteamApi,
+  updateSavedAccount as updateSavedAccountApi
 } from "../services/gameLibraryApi";
-import type { EpicSyncRequest, LibraryResponse, SavedAccount, SteamSyncRequest } from "../types/gameLibrary";
+import type {
+  EpicSyncRequest,
+  LibraryResponse,
+  SavedAccount,
+  SteamSyncRequest,
+  UpdateSavedAccountRequest
+} from "../types/gameLibrary";
 import { useAuthStore } from "./authStore";
 
 /**
@@ -21,6 +30,7 @@ export const useLibraryStore = defineStore("library", () => {
   const loading = ref(false);
   const syncingSteam = ref(false);
   const syncingEpic = ref(false);
+  const accountActionLoadingIds = ref<number[]>([]);
 
   const hasDuplicates = computed(() => (library.value?.duplicateGroups ?? 0) > 0);
 
@@ -45,6 +55,30 @@ export const useLibraryStore = defineStore("library", () => {
     }
 
     authStore.setError(error instanceof Error ? error.message : "请求失败，请稍后重试。");
+  }
+
+  /**
+   * 标记账号操作加载状态，避免重复提交。
+   * @param accountId 账号主键。
+   * @param loadingState 是否处于加载中。
+   */
+  function setAccountActionLoading(accountId: number, loadingState: boolean): void {
+    if (loadingState) {
+      if (!accountActionLoadingIds.value.includes(accountId)) {
+        accountActionLoadingIds.value = [...accountActionLoadingIds.value, accountId];
+      }
+      return;
+    }
+
+    accountActionLoadingIds.value = accountActionLoadingIds.value.filter((id) => id !== accountId);
+  }
+
+  /**
+   * 判断账号行是否正在执行操作。
+   * @param accountId 账号主键。
+   */
+  function isAccountActionLoading(accountId: number): boolean {
+    return accountActionLoadingIds.value.includes(accountId);
   }
 
   /**
@@ -152,18 +186,99 @@ export const useLibraryStore = defineStore("library", () => {
     }
   }
 
+  /**
+   * 使用已保存凭证重新拉取指定账号库存。
+   * @param accountId 账号主键。
+   */
+  async function resyncSavedAccount(accountId: number): Promise<boolean> {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      authStore.setError("请先登录。");
+      return false;
+    }
+
+    setAccountActionLoading(accountId, true);
+    authStore.clearError();
+    try {
+      await resyncSavedAccountApi(accountId);
+      await loadProtectedData();
+      return true;
+    } catch (error) {
+      handleApiError(error);
+      return false;
+    } finally {
+      setAccountActionLoading(accountId, false);
+    }
+  }
+
+  /**
+   * 更新已保存账号基础信息或凭证。
+   * @param accountId 账号主键。
+   * @param payload 更新参数。
+   */
+  async function updateSavedAccount(accountId: number, payload: UpdateSavedAccountRequest): Promise<boolean> {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      authStore.setError("请先登录。");
+      return false;
+    }
+
+    setAccountActionLoading(accountId, true);
+    authStore.clearError();
+    try {
+      await updateSavedAccountApi(accountId, payload);
+      await loadProtectedData();
+      return true;
+    } catch (error) {
+      handleApiError(error);
+      return false;
+    } finally {
+      setAccountActionLoading(accountId, false);
+    }
+  }
+
+  /**
+   * 删除已保存账号及其关联库存。
+   * @param accountId 账号主键。
+   */
+  async function deleteSavedAccount(accountId: number): Promise<boolean> {
+    const authStore = useAuthStore();
+    if (!authStore.isAuthenticated) {
+      authStore.setError("请先登录。");
+      return false;
+    }
+
+    setAccountActionLoading(accountId, true);
+    authStore.clearError();
+    try {
+      await deleteSavedAccountApi(accountId);
+      await loadProtectedData();
+      return true;
+    } catch (error) {
+      handleApiError(error);
+      return false;
+    } finally {
+      setAccountActionLoading(accountId, false);
+    }
+  }
+
   return {
     library,
     accounts,
     loading,
     syncingSteam,
     syncingEpic,
+    accountActionLoadingIds,
     hasDuplicates,
     resetLibraryData,
     loadLibrary,
     loadAccounts,
     loadProtectedData,
     syncSteam,
-    syncEpic
+    syncEpic,
+    isAccountActionLoading,
+    resyncSavedAccount,
+    updateSavedAccount,
+    deleteSavedAccount
   };
 });

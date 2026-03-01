@@ -1,6 +1,6 @@
 # 项目架构文档
 
-> 更新时间：2026-03-01 10:33:00 +08:00
+> 更新时间：2026-03-01 11:18:44 +08:00
 
 ## 1. 总览
 
@@ -37,6 +37,7 @@ multi-platform-game-library-manager/
 │  │     ├─ OwnedGameEntity.cs         # 已拥有游戏实体
 │  │     └─ PlatformAccountEntity.cs   # 平台账号实体
 │  ├─ Models/                          # 业务模型与 DTO
+│  │  ├─ AccountManagementModels.cs    # 已保存账号编辑请求模型
 │  │  ├─ AuthModels.cs                 # 认证请求/响应模型
 │  │  ├─ GamePlatform.cs               # 平台枚举（Steam/Epic）
 │  │  ├─ LibraryResponse.cs            # 库存聚合响应模型与重复组模型
@@ -59,8 +60,10 @@ multi-platform-game-library-manager/
 │  │  │  ├─ ServiceOperationResult.cs  # 服务层标准结果模型
 │  │  │  └─ Utc8DateTimeJsonConverter.cs # 全局 UTC+8 时间序列化/反序列化转换器
 │  │  ├─ Library/                      # 库存查询与持久化服务
+│  │  │  ├─ AccountManagementService.cs # 已保存账号重拉、修改、删除服务实现
 │  │  │  ├─ DuplicateDetector.cs       # 跨平台重复游戏检测服务
 │  │  │  ├─ EfCoreGameLibraryStore.cs  # 基于 EF Core 的库存存储实现
+│  │  │  ├─ IAccountManagementService.cs # 已保存账号管理服务接口抽象
 │  │  │  ├─ IGameLibraryStore.cs       # 库存存储接口抽象
 │  │  │  ├─ ILibraryQueryService.cs    # 库存查询服务接口抽象
 │  │  │  ├─ LibraryQueryService.cs     # 库存查询实现（聚合库存与重复检测）

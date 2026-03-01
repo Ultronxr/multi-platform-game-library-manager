@@ -204,6 +204,16 @@ th {
   color: var(--muted);
 }
 
+.actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.danger {
+  color: var(--alert);
+  border-color: rgba(203, 55, 0, 0.45);
+}
+
 @keyframes enter {
   from {
     opacity: 0;

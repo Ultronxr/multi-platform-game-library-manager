@@ -43,6 +43,12 @@ export interface EpicSyncRequest {
   accountName?: string;
 }
 
+export interface UpdateSavedAccountRequest {
+  accountName?: string;
+  externalAccountId?: string | null;
+  credentialValue?: string;
+}
+
 export interface LoginRequest {
   username: string;
   password: string;

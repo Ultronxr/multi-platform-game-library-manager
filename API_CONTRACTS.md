@@ -1,6 +1,6 @@
 # API 契约文档
 
-> 更新时间：2026-03-01 10:44:00 +08:00
+> 更新时间：2026-03-01 11:18:44 +08:00
 >
 > 服务端项目：`backend/GameLibrary.Api.csproj`
 
@@ -30,6 +30,7 @@
 - `400 BadRequest`：参数校验不通过/外部平台同步失败
 - `401 Unauthorized`：未登录或凭据无效
 - `403 Forbidden`：角色权限不足（如非 admin 调用管理员接口）
+- `404 NotFound`：资源不存在（如账号 ID 无效）
 - `409 Conflict`：资源冲突（如用户名已存在）
 
 ## 3. 枚举与模型约定
@@ -324,6 +325,79 @@
 
 - `401`：未登录或 token 失效
 
+### POST `/api/accounts/{accountId}/resync`
+
+- 鉴权：是
+- 说明：使用数据库已保存的账号凭证，一键重新拉取指定账号库存
+
+`200 OK`
+
+```json
+{
+  "syncedCount": 123
+}
+```
+
+错误码：
+
+- `400`：账号缺少必需凭证（如 Steam 缺少 SteamId 或 API Key）
+- `401`：未登录或 token 失效
+- `404`：账号不存在
+
+### PUT `/api/accounts/{accountId}`
+
+- 鉴权：是
+- 说明：修改指定账号信息（账号名、平台账号 ID、凭证）
+
+请求体：
+
+```json
+{
+  "accountName": "Main Steam",
+  "externalAccountId": "7656119...",
+  "credentialValue": "new-credential"
+}
+```
+
+字段规则：
+
+- `accountName` 可选；传空白时保持原值
+- `externalAccountId` 可选；传 `""` 时会清空（Steam 账号不允许最终为空）
+- `credentialValue` 可选；不传表示不修改，传空白会报错
+
+`200 OK`
+
+```json
+{
+  "message": "Account updated."
+}
+```
+
+错误码：
+
+- `400`：字段不合法（如凭证空白、Steam 缺少 SteamId）
+- `401`：未登录或 token 失效
+- `404`：账号不存在
+- `409`：同平台下账号名冲突
+
+### DELETE `/api/accounts/{accountId}`
+
+- 鉴权：是
+- 说明：删除指定账号及其关联库存记录（级联删除）
+
+`200 OK`
+
+```json
+{
+  "message": "Account deleted."
+}
+```
+
+错误码：
+
+- `401`：未登录或 token 失效
+- `404`：账号不存在
+
 ## 5. 前端对接映射
 
 `frontend/src/services/gameLibraryApi.ts` 与后端路径映射如下：
@@ -334,6 +408,9 @@
 - `fetchCurrentUser` -> `GET /api/auth/me`
 - `fetchLibrary` -> `GET /api/library`
 - `fetchAccounts` -> `GET /api/accounts`
+- `resyncSavedAccount` -> `POST /api/accounts/{accountId}/resync`
+- `updateSavedAccount` -> `PUT /api/accounts/{accountId}`
+- `deleteSavedAccount` -> `DELETE /api/accounts/{accountId}`
 - `syncSteam` -> `POST /api/sync/steam`
 - `syncEpic` -> `POST /api/sync/epic`
 

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, reactive } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useAuthStore } from "./stores/authStore";
 import { useLibraryStore } from "./stores/libraryStore";
+import type { SavedAccount } from "./types/gameLibrary";
 
 const authStore = useAuthStore();
 const libraryStore = useLibraryStore();
@@ -39,6 +40,13 @@ const steamForm = reactive({
 const epicForm = reactive({
   accessToken: "",
   accountName: ""
+});
+
+const editingAccountId = ref<number | null>(null);
+const accountEditForm = reactive({
+  accountName: "",
+  externalAccountId: "",
+  credentialValue: ""
 });
 
 /**
@@ -107,6 +115,67 @@ async function onSyncEpic(): Promise<void> {
     accessToken: epicForm.accessToken,
     accountName: epicForm.accountName
   });
+}
+
+/**
+ * 打开账号编辑表单并回填当前值。
+ * @param account 已保存账号行数据。
+ */
+function openEditAccount(account: SavedAccount): void {
+  editingAccountId.value = account.id;
+  accountEditForm.accountName = account.accountName;
+  accountEditForm.externalAccountId = account.externalAccountId ?? "";
+  accountEditForm.credentialValue = "";
+}
+
+/**
+ * 取消编辑并清空临时表单。
+ */
+function cancelEditAccount(): void {
+  editingAccountId.value = null;
+  accountEditForm.accountName = "";
+  accountEditForm.externalAccountId = "";
+  accountEditForm.credentialValue = "";
+}
+
+/**
+ * 提交账号编辑。
+ * @param accountId 账号主键。
+ */
+async function submitEditAccount(accountId: number): Promise<void> {
+  const success = await libraryStore.updateSavedAccount(accountId, {
+    accountName: accountEditForm.accountName,
+    externalAccountId: accountEditForm.externalAccountId,
+    credentialValue: accountEditForm.credentialValue || undefined
+  });
+
+  if (success) {
+    cancelEditAccount();
+  }
+}
+
+/**
+ * 一键重拉指定账号库存。
+ * @param accountId 账号主键。
+ */
+async function onResyncAccount(accountId: number): Promise<void> {
+  await libraryStore.resyncSavedAccount(accountId);
+}
+
+/**
+ * 删除指定账号及其库存数据。
+ * @param accountId 账号主键。
+ */
+async function onDeleteAccount(accountId: number): Promise<void> {
+  const confirmed = window.confirm("确认删除该账号及其关联库存吗？此操作不可撤销。");
+  if (!confirmed) {
+    return;
+  }
+
+  const success = await libraryStore.deleteSavedAccount(accountId);
+  if (success && editingAccountId.value === accountId) {
+    cancelEditAccount();
+  }
 }
 
 /**
@@ -242,16 +311,75 @@ onMounted(async () => {
               <th>凭证类型</th>
               <th>凭证预览</th>
               <th>上次同步 (UTC+8)</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="account in accounts" :key="account.id">
               <td>{{ account.platform }}</td>
-              <td>{{ account.accountName }}</td>
-              <td>{{ account.externalAccountId || "-" }}</td>
+              <td>
+                <template v-if="editingAccountId === account.id">
+                  <input v-model="accountEditForm.accountName" placeholder="账号名称" />
+                </template>
+                <template v-else>
+                  {{ account.accountName }}
+                </template>
+              </td>
+              <td>
+                <template v-if="editingAccountId === account.id">
+                  <input v-model="accountEditForm.externalAccountId" placeholder="平台账号ID" />
+                </template>
+                <template v-else>
+                  {{ account.externalAccountId || "-" }}
+                </template>
+              </td>
               <td>{{ account.credentialType }}</td>
-              <td><code>{{ account.credentialPreview }}</code></td>
+              <td>
+                <template v-if="editingAccountId === account.id">
+                  <input
+                    v-model="accountEditForm.credentialValue"
+                    type="password"
+                    placeholder="留空表示不修改凭证"
+                  />
+                </template>
+                <template v-else>
+                  <code>{{ account.credentialPreview }}</code>
+                </template>
+              </td>
               <td>{{ account.lastSyncedAtUtc || "-" }}</td>
+              <td class="actions">
+                <template v-if="editingAccountId === account.id">
+                  <button
+                    :disabled="libraryStore.isAccountActionLoading(account.id)"
+                    @click="submitEditAccount(account.id)"
+                  >
+                    保存
+                  </button>
+                  <button class="ghost" @click="cancelEditAccount">取消</button>
+                </template>
+                <template v-else>
+                  <button
+                    :disabled="libraryStore.isAccountActionLoading(account.id)"
+                    @click="onResyncAccount(account.id)"
+                  >
+                    {{ libraryStore.isAccountActionLoading(account.id) ? "处理中..." : "重拉库存" }}
+                  </button>
+                  <button
+                    class="ghost"
+                    :disabled="libraryStore.isAccountActionLoading(account.id)"
+                    @click="openEditAccount(account)"
+                  >
+                    修改
+                  </button>
+                  <button
+                    class="ghost danger"
+                    :disabled="libraryStore.isAccountActionLoading(account.id)"
+                    @click="onDeleteAccount(account.id)"
+                  >
+                    删除
+                  </button>
+                </template>
+              </td>
             </tr>
           </tbody>
         </table>
