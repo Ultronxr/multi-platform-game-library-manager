@@ -270,3 +270,12 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：新增 `/api/library/games` 后端分页接口，并在 `/api/library` 增加 `includeGames` 控制摘要返回；前端库存表改为服务端分页与筛选参数联动，避免全量数据在前端分页。
+
+19. 2026-03-01 12:04:07 +08:00
+- 变更：固定游戏库存表格高度，避免分页尺寸变更引起窗口高度跳变
+- 调整：
+  - `frontend/src/App.vue`
+  - `frontend/src/style.css`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：为库存表格设置固定滚动高度（桌面与移动端分段高度），分页条数切换时仅表格内部滚动区域变化，不再导致页面整体高度频繁变化。

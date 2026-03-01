@@ -113,6 +113,10 @@ const gameTablePagination = computed(() => ({
   showSizeChanger: true,
   showTotal: (total: number) => `共 ${total} 条`
 }));
+const inventoryTableScroll = {
+  x: 900,
+  y: 520
+};
 
 /**
  * 退出登录并清理页面数据。
@@ -551,11 +555,12 @@ onMounted(async () => {
           </a-space>
         </div>
         <a-table
+          class="inventory-table-fixed"
           :columns="gameTableColumns"
           :data-source="pagedGames"
           :loading="gamesLoading"
           :pagination="gameTablePagination"
-          :scroll="{ x: 900 }"
+          :scroll="inventoryTableScroll"
           size="middle"
           :row-key="gameRowKey"
           @change="onGameTableChange"

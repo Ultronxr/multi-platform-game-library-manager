@@ -146,6 +146,11 @@ body {
   flex-wrap: wrap;
 }
 
+.inventory-table-fixed .ant-table-body {
+  min-height: 520px;
+  max-height: 520px !important;
+}
+
 @media (max-width: 992px) {
   .grid.two,
   .grid.three {
@@ -159,10 +164,20 @@ body {
   .inventory-filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .inventory-table-fixed .ant-table-body {
+    min-height: 440px;
+    max-height: 440px !important;
+  }
 }
 
 @media (max-width: 640px) {
   .inventory-filter-grid {
     grid-template-columns: 1fr;
+  }
+
+  .inventory-table-fixed .ant-table-body {
+    min-height: 360px;
+    max-height: 360px !important;
   }
 }
