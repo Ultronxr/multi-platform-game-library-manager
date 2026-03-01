@@ -288,3 +288,47 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：将库存表格固定滚动高度从 `520` 提升至 `680`，并同步提升平板/手机断点高度（`560`/`460`），减少可视区域不足导致的频繁滚动。
+
+21. 2026-03-01 12:32:53 +08:00
+- 变更：厂商库存 API 响应增加 DEBUG 级完整日志输出
+- 调整：
+  - `backend/Services/Sync/SteamOwnedGamesClient.cs`
+  - `backend/Services/Sync/EpicLibraryClient.cs`
+  - `backend/nlog.config`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：Steam/Epic 库存拉取请求在成功、失败与特殊状态码下均记录 `状态码 + 原始响应体` 到 DEBUG 日志；异常场景补充 DEBUG 异常日志；NLog 增加两个客户端 logger 的 Debug 级别输出规则，便于精确追踪返回结果。
+
+22. 2026-03-01 12:44:40 +08:00
+- 变更：将数据库 SQL 日志与前端请求触发的后端请求日志统一下调到 DEBUG
+- 调整：
+  - `backend/Program.cs`
+  - `backend/nlog.config`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：新增自定义 HTTP 请求 Debug 中间件（输出方法、路径、状态码与耗时）；EF Core 将 `CommandExecuting/CommandExecuted/CommandError` 事件级别降为 Debug；NLog 将 `Microsoft.*` 总规则提高到 `Warn`，避免框架层 `INFO` 噪声混淆业务日志。
+
+23. 2026-03-01 12:50:50 +08:00
+- 变更：回滚上一轮“SQL/请求日志下调到 DEBUG”的改动
+- 调整：
+  - `backend/Program.cs`
+  - `backend/nlog.config`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：移除自定义 HTTP 请求 Debug 中间件与 EF Core `ConfigureWarnings` Debug 降级配置；NLog 恢复为 `Microsoft.*` `Info` 级别输出，保留既有厂商同步客户端 Debug 日志规则。
+
+24. 2026-03-01 13:07:18 +08:00
+- 变更：仅通过 `nlog.config` 下调非业务日志到 DEBUG 观察层级
+- 调整：
+  - `backend/nlog.config`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：不改任何后端代码，仅在 NLog 规则中将 `Microsoft.EntityFrameworkCore.*`、`Microsoft.AspNetCore.*`、`System.Net.Http.HttpClient.*` 的非业务日志限制在 `Debug` 范围；`Microsoft.*` 统一收敛到 `Warn+`，业务日志继续走 `Info+`。
+
+25. 2026-03-01 13:27:58 +08:00
+- 变更：彻底关闭 `Microsoft.AspNetCore` 与 `EF Core` 日志
+- 调整：
+  - `backend/nlog.config`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：在 NLog 新增 `Null` 目标 `blackhole`，并将 `Microsoft.EntityFrameworkCore.*` 与 `Microsoft.AspNetCore.*` 全量路由到 `blackhole`（`minLevel=Trace` + `final=true`），实现这两类日志完全静默。
