@@ -115,7 +115,7 @@ const gameTablePagination = computed(() => ({
 }));
 const inventoryTableScroll = {
   x: 900,
-  y: 520
+  y: 680
 };
 
 /**

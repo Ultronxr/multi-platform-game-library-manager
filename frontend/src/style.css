@@ -147,8 +147,8 @@ body {
 }
 
 .inventory-table-fixed .ant-table-body {
-  min-height: 520px;
-  max-height: 520px !important;
+  min-height: 680px;
+  max-height: 680px !important;
 }
 
 @media (max-width: 992px) {
@@ -166,8 +166,8 @@ body {
   }
 
   .inventory-table-fixed .ant-table-body {
-    min-height: 440px;
-    max-height: 440px !important;
+    min-height: 560px;
+    max-height: 560px !important;
   }
 }
 
@@ -177,7 +177,7 @@ body {
   }
 
   .inventory-table-fixed .ant-table-body {
-    min-height: 360px;
-    max-height: 360px !important;
+    min-height: 460px;
+    max-height: 460px !important;
   }
 }
