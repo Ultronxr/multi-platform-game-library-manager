@@ -43,6 +43,11 @@ public sealed class OwnedGameEntity
     public string Title { get; set; } = string.Empty;
 
     /// <summary>
+    /// Epic 侧应用标识（仅 Epic 数据有值）。
+    /// </summary>
+    public string? EpicAppName { get; set; }
+
+    /// <summary>
     /// 归一化标题（用于重复检测）。
     /// </summary>
     public string NormalizedTitle { get; set; } = string.Empty;

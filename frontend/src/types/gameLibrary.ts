@@ -6,10 +6,25 @@ export interface OwnedGame {
   platform: Platform;
   accountName: string;
   syncedAtUtc: string;
+  epicAppName?: string | null;
 }
 
-export interface LibraryGameListItem extends OwnedGame {
+export interface LibraryGameGroupItem {
+  externalId: string;
+  epicAppName?: string | null;
+  syncedAtUtc: string;
+}
+
+export interface LibraryGameListItem {
+  groupKey: string;
+  title: string;
+  platform: Platform;
+  accountName: string;
   accountExternalId?: string | null;
+  syncedAtUtc: string;
+  groupItemCount: number;
+  epicAppName?: string | null;
+  groupItems: LibraryGameGroupItem[];
 }
 
 export interface DuplicateGroup {

@@ -68,7 +68,14 @@ public sealed class EpicLibraryClient(
                         continue;
                     }
 
-                    games.Add(new OwnedGame(externalId, title, GamePlatform.Epic, string.Empty, DateTime.UtcNow));
+                    var epicAppName = ResolveEpicAppName(item);
+                    games.Add(new OwnedGame(
+                        externalId,
+                        title,
+                        GamePlatform.Epic,
+                        string.Empty,
+                        DateTime.UtcNow,
+                        epicAppName));
                     addedCount++;
                 }
 
@@ -244,6 +251,29 @@ public sealed class EpicLibraryClient(
             return ReadString(catalogItem, "sandboxName")
                 ?? ReadString(catalogItem, "title")
                 ?? ReadString(catalogItem, "name");
+        }
+
+        return null;
+    }
+
+    private static string? ResolveEpicAppName(JsonElement item)
+    {
+        var directAppName = ReadString(item, "appName");
+        if (!string.IsNullOrWhiteSpace(directAppName))
+        {
+            return directAppName;
+        }
+
+        if (item.TryGetProperty("metadata", out var metadata) &&
+            metadata.ValueKind == JsonValueKind.Object)
+        {
+            return ReadString(metadata, "appName");
+        }
+
+        if (item.TryGetProperty("catalogItem", out var catalogItem) &&
+            catalogItem.ValueKind == JsonValueKind.Object)
+        {
+            return ReadString(catalogItem, "appName");
         }
 
         return null;

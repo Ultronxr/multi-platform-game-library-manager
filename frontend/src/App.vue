@@ -10,7 +10,7 @@ import {
   SyncOutlined,
   UserOutlined
 } from "@ant-design/icons-vue";
-import type { LibraryGameListItem, SavedAccount } from "./types/gameLibrary";
+import type { LibraryGameGroupItem, LibraryGameListItem, SavedAccount } from "./types/gameLibrary";
 import { useAuthStore } from "./stores/authStore";
 import { useLibraryStore } from "./stores/libraryStore";
 
@@ -93,7 +93,14 @@ const gameTableColumns = [
   { title: "游戏", dataIndex: "title", key: "title", ellipsis: true },
   { title: "平台", dataIndex: "platform", key: "platform", width: 100 },
   { title: "账号", dataIndex: "accountName", key: "accountName", width: 160 },
+  { title: "Epic AppName", dataIndex: "epicAppName", key: "epicAppName", width: 200 },
+  { title: "同组条目数", dataIndex: "groupItemCount", key: "groupItemCount", width: 120 },
   { title: "账号ID", dataIndex: "accountExternalId", key: "accountExternalId", width: 180 },
+  { title: "同步时间 (UTC+8)", dataIndex: "syncedAtUtc", key: "syncedAtUtc", width: 170 }
+];
+const gameGroupItemColumns = [
+  { title: "条目 ExternalID", dataIndex: "externalId", key: "externalId", width: 260 },
+  { title: "Epic AppName", dataIndex: "epicAppName", key: "epicAppName", width: 220 },
   { title: "同步时间 (UTC+8)", dataIndex: "syncedAtUtc", key: "syncedAtUtc", width: 170 }
 ];
 const gamePlatformOptions = computed(() => {
@@ -114,8 +121,11 @@ const gameTablePagination = computed(() => ({
   showTotal: (total: number) => `共 ${total} 条`
 }));
 const inventoryTableScroll = {
-  x: 900,
+  x: 1050,
   y: 680
+};
+const gameTableExpandable = {
+  rowExpandable: (record: LibraryGameListItem) => record.groupItemCount > 1
 };
 
 /**
@@ -261,7 +271,15 @@ async function onDeleteAccount(account: SavedAccount): Promise<void> {
  * @param game 游戏记录。
  */
 function gameRowKey(game: LibraryGameListItem): string {
-  return `${game.platform}-${game.accountName}-${game.externalId}`;
+  return game.groupKey;
+}
+
+/**
+ * 明细子行主键。
+ * @param item 分组明细项。
+ */
+function groupItemRowKey(item: LibraryGameGroupItem): string {
+  return item.externalId;
 }
 
 /**
@@ -561,10 +579,37 @@ onMounted(async () => {
           :loading="gamesLoading"
           :pagination="gameTablePagination"
           :scroll="inventoryTableScroll"
+          :expandable="gameTableExpandable"
           size="middle"
           :row-key="gameRowKey"
           @change="onGameTableChange"
-        />
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'epicAppName'">
+              {{ record.epicAppName || "-" }}
+            </template>
+            <template v-else-if="column.key === 'groupItemCount'">
+              <a-tag :color="record.groupItemCount > 1 ? 'gold' : 'blue'">
+                {{ record.groupItemCount }}
+              </a-tag>
+            </template>
+          </template>
+          <template #expandedRowRender="{ record }">
+            <a-table
+              :columns="gameGroupItemColumns"
+              :data-source="record.groupItems"
+              :pagination="false"
+              :row-key="groupItemRowKey"
+              size="small"
+            >
+              <template #bodyCell="{ column, record: detail }">
+                <template v-if="column.key === 'epicAppName'">
+                  {{ detail.epicAppName || "-" }}
+                </template>
+              </template>
+            </a-table>
+          </template>
+        </a-table>
       </a-card>
     </template>
 

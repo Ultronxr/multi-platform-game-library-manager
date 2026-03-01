@@ -154,6 +154,10 @@ public sealed class GameLibraryDbContext(DbContextOptions<GameLibraryDbContext> 
                 .HasMaxLength(512)
                 .IsRequired();
 
+            entity.Property(x => x.EpicAppName)
+                .HasColumnName("epic_app_name")
+                .HasMaxLength(256);
+
             entity.Property(x => x.NormalizedTitle)
                 .HasColumnName("normalized_title")
                 .HasMaxLength(512)

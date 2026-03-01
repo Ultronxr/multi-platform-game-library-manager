@@ -22,12 +22,13 @@ public sealed class LibraryQueryService(
         var allGames = (await store.GetAllGamesAsync(cancellationToken))
             .OrderBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
             .ToList();
+        var groupedGames = CollapseSameGamePerAccount(allGames);
 
-        var duplicates = duplicateDetector.FindCrossPlatformDuplicates(allGames);
-        var gamesForResponse = includeGames ? allGames : [];
+        var duplicates = duplicateDetector.FindCrossPlatformDuplicates(groupedGames);
+        var gamesForResponse = includeGames ? groupedGames : [];
 
         return new LibraryResponse(
-            allGames.Count,
+            groupedGames.Count,
             duplicates.Count,
             gamesForResponse,
             duplicates);
@@ -80,34 +81,137 @@ public sealed class LibraryQueryService(
                 (x.Account.ExternalAccountId ?? string.Empty).Contains(safeAccountExternalId));
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
-        var rows = await query
-            .OrderBy(x => x.OwnedGame.Title)
-            .ThenBy(x => x.OwnedGame.AccountName)
-            .ThenBy(x => x.OwnedGame.ExternalGameId)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .Select(x => new
+        var groupedQuery = query
+            .GroupBy(x => new
             {
-                x.OwnedGame.ExternalGameId,
-                x.OwnedGame.Title,
+                x.OwnedGame.AccountId,
                 x.OwnedGame.Platform,
                 x.OwnedGame.AccountName,
                 x.Account.ExternalAccountId,
+                x.OwnedGame.Title
+            });
+
+        var totalCount = await groupedQuery.CountAsync(cancellationToken);
+        if (totalCount == 0)
+        {
+            return new LibraryGamesPageResponse(pageNumber, pageSize, totalCount, []);
+        }
+
+        var pageGroups = await groupedQuery
+            .Select(g => new
+            {
+                g.Key.AccountId,
+                g.Key.Platform,
+                g.Key.AccountName,
+                g.Key.ExternalAccountId,
+                g.Key.Title,
+                SyncedAtUtc = g.Max(x => x.OwnedGame.SyncedAtUtc),
+                GroupItemCount = g.Count()
+            })
+            .OrderBy(x => x.Title)
+            .ThenBy(x => x.AccountName)
+            .ThenBy(x => x.Platform)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var accountIds = pageGroups.Select(x => x.AccountId).Distinct().ToList();
+        var titles = pageGroups.Select(x => x.Title).Distinct().ToList();
+        var pageGroupKeys = pageGroups
+            .Select(x => BuildGroupKey(x.AccountId, x.Platform, x.Title))
+            .ToHashSet(StringComparer.Ordinal);
+
+        var childRows = await query
+            .Where(x =>
+                accountIds.Contains(x.OwnedGame.AccountId) &&
+                titles.Contains(x.OwnedGame.Title))
+            .Select(x => new
+            {
+                x.OwnedGame.AccountId,
+                x.OwnedGame.Platform,
+                x.OwnedGame.AccountName,
+                x.Account.ExternalAccountId,
+                x.OwnedGame.Title,
+                x.OwnedGame.ExternalGameId,
+                x.OwnedGame.EpicAppName,
                 x.OwnedGame.SyncedAtUtc
             })
             .ToListAsync(cancellationToken);
 
-        var items = rows
-            .Select(row => new LibraryGameListItem(
-                row.ExternalGameId,
-                row.Title,
-                row.Platform,
-                row.AccountName,
-                row.ExternalAccountId,
-                Utc8DateTimeFormatter.NormalizeToUtc8(row.SyncedAtUtc)))
+        var groupedChildren = childRows
+            .Where(row => pageGroupKeys.Contains(BuildGroupKey(row.AccountId, row.Platform, row.Title)))
+            .GroupBy(row => BuildGroupKey(row.AccountId, row.Platform, row.Title), StringComparer.Ordinal)
+            .ToDictionary(
+                group => group.Key,
+                group => group
+                    .OrderBy(row => row.ExternalGameId, StringComparer.OrdinalIgnoreCase)
+                    .Select(row => new LibraryGameGroupItem(
+                        row.ExternalGameId,
+                        row.EpicAppName,
+                        Utc8DateTimeFormatter.NormalizeToUtc8(row.SyncedAtUtc)))
+                    .ToList(),
+                StringComparer.Ordinal);
+
+        var items = pageGroups
+            .Select(group =>
+            {
+                var groupKey = BuildGroupKey(group.AccountId, group.Platform, group.Title);
+                var groupItems = groupedChildren.TryGetValue(groupKey, out var details)
+                    ? details
+                    : [];
+                var representativeAppName = groupItems
+                    .Select(x => x.EpicAppName)
+                    .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+
+                return new LibraryGameListItem(
+                    groupKey,
+                    group.Title,
+                    group.Platform,
+                    group.AccountName,
+                    group.ExternalAccountId,
+                    Utc8DateTimeFormatter.NormalizeToUtc8(group.SyncedAtUtc),
+                    group.GroupItemCount,
+                    representativeAppName,
+                    groupItems);
+            })
             .ToList();
 
         return new LibraryGamesPageResponse(pageNumber, pageSize, totalCount, items);
+    }
+
+    private static string BuildGroupKey(long accountId, GamePlatform platform, string title) =>
+        $"{accountId}|{platform}|{title}";
+
+    private static IReadOnlyCollection<OwnedGame> CollapseSameGamePerAccount(IReadOnlyCollection<OwnedGame> games)
+    {
+        // 统计口径按“同平台 + 同账号 + 同游戏名”聚合，避免 Epic 同游戏附加项重复计数。
+        return games
+            .Where(x => !string.IsNullOrWhiteSpace(x.Title))
+            .GroupBy(
+                x => new
+                {
+                    x.Platform,
+                    AccountName = x.AccountName.Trim().ToUpperInvariant(),
+                    Title = x.Title.Trim().ToUpperInvariant()
+                })
+            .Select(group =>
+            {
+                var representative = group
+                    .OrderByDescending(x => x.SyncedAtUtc)
+                    .ThenBy(x => x.ExternalId, StringComparer.OrdinalIgnoreCase)
+                    .First();
+                var latestSyncedAt = group.Max(x => x.SyncedAtUtc);
+                return new OwnedGame(
+                    representative.ExternalId,
+                    representative.Title,
+                    representative.Platform,
+                    representative.AccountName,
+                    latestSyncedAt,
+                    representative.EpicAppName);
+            })
+            .OrderBy(x => x.Title, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.AccountName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.Platform)
+            .ToList();
     }
 }

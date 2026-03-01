@@ -348,3 +348,22 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：`GetOwnedGamesAsync` 改为按 `responseMetadata.nextCursor` 循环翻页拉取，并传递 `stateToken`；新增游标防死循环保护与 `externalId` 去重，避免只取首屏导致库存缺失。
+
+28. 2026-03-01 16:58:50 +08:00
+- 变更：支持 Epic 同游戏多条目分组展示与统计口径修正
+- 调整：
+  - `backend/Data/Entities/OwnedGameEntity.cs`
+  - `backend/Data/GameLibraryDbContext.cs`
+  - `backend/Models/OwnedGame.cs`
+  - `backend/Models/LibraryGamePageModels.cs`
+  - `backend/Services/Sync/EpicLibraryClient.cs`
+  - `backend/Services/Library/EfCoreGameLibraryStore.cs`
+  - `backend/Services/Library/LibraryQueryService.cs`
+  - `backend/sql/001_init_schema.sql`
+  - `backend/sql/002_backend_queries.sql`
+  - `frontend/src/types/gameLibrary.ts`
+  - `frontend/src/App.vue`
+  - `API_CONTRACTS.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：新增并持久化 Epic `appName`（数据库列 `owned_games.epic_app_name`）；库存统计与分页改为按“同平台 + 同账号 + 同游戏名”聚合主记录，保留组内所有原始条目供展开查看；前端库存表改为可展开行展示同组明细，满足“标记同游戏多个项而非去重删除”的业务要求。

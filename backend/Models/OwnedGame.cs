@@ -8,4 +8,5 @@ public sealed record OwnedGame(
     string Title,
     GamePlatform Platform,
     string AccountName,
-    DateTime SyncedAtUtc);
+    DateTime SyncedAtUtc,
+    string? EpicAppName = null);

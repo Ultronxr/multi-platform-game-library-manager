@@ -12,15 +12,26 @@ public sealed record LibraryGamesQueryRequest(
     int PageSize = 20);
 
 /// <summary>
-/// 库存分页项。
+/// 同组库存下的明细项（用于展开查看）。
+/// </summary>
+public sealed record LibraryGameGroupItem(
+    string ExternalId,
+    string? EpicAppName,
+    DateTime SyncedAtUtc);
+
+/// <summary>
+/// 库存分页项（按同平台+同账号+同游戏聚合后展示）。
 /// </summary>
 public sealed record LibraryGameListItem(
-    string ExternalId,
+    string GroupKey,
     string Title,
     GamePlatform Platform,
     string AccountName,
     string? AccountExternalId,
-    DateTime SyncedAtUtc);
+    DateTime SyncedAtUtc,
+    int GroupItemCount,
+    string? EpicAppName,
+    IReadOnlyCollection<LibraryGameGroupItem> GroupItems);
 
 /// <summary>
 /// 库存分页查询响应。

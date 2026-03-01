@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS owned_games (
   account_name VARCHAR(128) NOT NULL COMMENT '同步时账号名称快照',
   external_game_id VARCHAR(128) NOT NULL COMMENT '平台侧游戏 ID',
   title VARCHAR(512) NOT NULL COMMENT '游戏原始标题',
+  epic_app_name VARCHAR(256) NULL COMMENT 'Epic 应用标识（仅 Epic 数据有值）',
   normalized_title VARCHAR(512) NOT NULL COMMENT '归一化标题（用于重复检测）',
   synced_at DATETIME(6) NOT NULL COMMENT '本次同步时间（UTC+8）',
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '记录创建时间（UTC+8）',

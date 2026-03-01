@@ -1,6 +1,6 @@
 # API 契约文档
 
-> 更新时间：2026-03-01 11:57:14 +08:00
+> 更新时间：2026-03-01 16:58:50 +08:00
 >
 > 服务端项目：`backend/GameLibrary.Api.csproj`
 
@@ -65,7 +65,8 @@
       "title": "string",
       "platform": "Steam",
       "accountName": "string",
-      "syncedAtUtc": "2026-03-01 08:00:00"
+      "syncedAtUtc": "2026-03-01 08:00:00",
+      "epicAppName": "EelVoiceFrench"
     }
   ],
   "duplicates": [
@@ -86,12 +87,26 @@
   "totalCount": 256,
   "items": [
     {
-      "externalId": "string",
+      "groupKey": "1|Epic|Kingdom Come: Deliverance",
       "title": "string",
-      "platform": "Steam",
+      "platform": "Epic",
       "accountName": "string",
       "accountExternalId": "7656119...",
-      "syncedAtUtc": "2026-03-01 08:00:00"
+      "syncedAtUtc": "2026-03-01 08:00:00",
+      "groupItemCount": 2,
+      "epicAppName": "EelTexturePack",
+      "groupItems": [
+        {
+          "externalId": "fcf595321e8e4b9c8bbdc140059a5913",
+          "epicAppName": "EelTexturePack",
+          "syncedAtUtc": "2026-03-01 08:00:00"
+        },
+        {
+          "externalId": "deee412efe814dd68fb8c40ede4dc7c8",
+          "epicAppName": "EelVoiceFrench",
+          "syncedAtUtc": "2026-03-01 08:00:00"
+        }
+      ]
     }
   ]
 }
@@ -321,6 +336,8 @@
 
 - 鉴权：是
 - 说明：按条件分页查询库存明细（后端分页）
+- 统计口径：同平台 + 同账号 + 同游戏名聚合为一条主记录（不物理去重）
+- 扩展信息：`groupItems` 返回聚合组内所有原始条目，用于前端展开查看
 
 查询参数：
 

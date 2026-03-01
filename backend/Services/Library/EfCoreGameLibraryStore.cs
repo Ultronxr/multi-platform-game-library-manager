@@ -99,6 +99,7 @@ public sealed class EfCoreGameLibraryStore(IDbContextFactory<GameLibraryDbContex
             AccountName = safeAccountName,
             ExternalGameId = game.ExternalId,
             Title = game.Title,
+            EpicAppName = NormalizeOptional(game.EpicAppName),
             NormalizedTitle = TitleNormalizer.Normalize(game.Title),
             SyncedAtUtc = now,
             CreatedAtUtc = now
@@ -128,7 +129,8 @@ public sealed class EfCoreGameLibraryStore(IDbContextFactory<GameLibraryDbContex
                 game.Title,
                 game.Platform,
                 game.AccountName,
-                Utc8DateTimeFormatter.NormalizeToUtc8(game.SyncedAtUtc)))
+                Utc8DateTimeFormatter.NormalizeToUtc8(game.SyncedAtUtc),
+                game.EpicAppName))
             .ToList();
     }
 

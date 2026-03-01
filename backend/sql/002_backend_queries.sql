@@ -39,6 +39,7 @@ INSERT INTO owned_games (
   account_name,
   external_game_id,
   title,
+  epic_app_name,
   normalized_title,
   synced_at
 )
@@ -48,6 +49,7 @@ VALUES (
   @accountName,
   @externalGameId,
   @title,
+  @epicAppName,
   @normalizedTitle,
   @syncedAt
 );
@@ -58,6 +60,7 @@ SELECT
   account_name,
   external_game_id,
   title,
+  epic_app_name,
   synced_at
 FROM owned_games
 ORDER BY title ASC;
@@ -115,7 +118,24 @@ SET
   updated_at = CURRENT_TIMESTAMP(6)
 WHERE id = @userId;
 
--- 10) （可选且仅执行一次）历史 UTC 数据迁移为 UTC+8
+-- 10) （可选且仅执行一次）为历史库补充 Epic appName 字段
+SET @has_epic_app_name := (
+  SELECT COUNT(1)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'owned_games'
+    AND COLUMN_NAME = 'epic_app_name'
+);
+SET @alter_sql := IF(
+  @has_epic_app_name = 0,
+  'ALTER TABLE owned_games ADD COLUMN epic_app_name VARCHAR(256) NULL COMMENT ''Epic 应用标识（仅 Epic 数据有值）'' AFTER title',
+  'SELECT ''owned_games.epic_app_name already exists'' AS message'
+);
+PREPARE epic_app_stmt FROM @alter_sql;
+EXECUTE epic_app_stmt;
+DEALLOCATE PREPARE epic_app_stmt;
+
+-- 11) （可选且仅执行一次）历史 UTC 数据迁移为 UTC+8
 -- 注意：以下语句仅用于历史数据一次性迁移，重复执行会导致时间再次 +8 小时。
 START TRANSACTION;
 

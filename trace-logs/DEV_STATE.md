@@ -1,6 +1,6 @@
 # 开发状态（DEV_STATE）
 
-> 最后更新：2026-03-01 16:12:26 +08:00
+> 最后更新：2026-03-01 16:58:50 +08:00
 
 ## 当前开发进度
 
@@ -29,6 +29,7 @@
 - 已完成：按用户要求彻底关闭 `Microsoft.AspNetCore.*` 与 `Microsoft.EntityFrameworkCore.*` 日志（通过 NLog `Null` 目标黑洞规则，无代码侵入）。
 - 已完成：修复 Epic 库存游戏名称解析优先级，优先使用 `sandboxName`（顶层 + `metadata` + `catalogItem`）作为游戏名称来源。
 - 已完成：修复 Epic 库存分页拉取，按 `responseMetadata.nextCursor` + `stateToken` 循环抓取全部页，并加入游标防死循环与记录去重。
+- 已完成：Epic 库存新增 `appName` 持久化并返回前端；库存统计和分页改为“同平台+同账号+同游戏名”聚合主记录，前端表格支持展开查看组内全部原始条目。
 
 ## 遗留 Bug
 
@@ -44,6 +45,7 @@
 - 前端筛选当前需点击“应用筛选”触发请求，尚未增加输入防抖自动查询。
 - 若厂商接口返回体过大，Debug 日志体积增长较快，需关注日志轮转与磁盘占用。
 - 当前环境 `dotnet build` 受 NuGet SSL 凭证问题影响（`NU1301`），本轮无法完成后端编译校验。
+- 本次变更新增 `owned_games.epic_app_name` 字段，历史数据库需执行升级 SQL（见 `backend/sql/002_backend_queries.sql` 第 10 节）后再运行同步。
 
 ## 未完成 TODO
 
