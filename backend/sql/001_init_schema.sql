@@ -8,6 +8,7 @@ CREATE DATABASE IF NOT EXISTS game_library_hub
   DEFAULT COLLATE utf8mb4_unicode_ci;
 
 USE game_library_hub;
+SET time_zone = '+08:00';
 
 CREATE TABLE IF NOT EXISTS app_users (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '用户主键 ID',
@@ -15,9 +16,9 @@ CREATE TABLE IF NOT EXISTS app_users (
   password_hash VARCHAR(512) NOT NULL COMMENT '密码哈希值',
   role VARCHAR(32) NOT NULL DEFAULT 'user' COMMENT '用户角色：admin 或 user',
   is_active TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用（1 启用，0 禁用）',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
-  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间（UTC）',
-  last_login_at DATETIME(6) NULL COMMENT '最近登录时间（UTC）',
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC+8）',
+  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间（UTC+8）',
+  last_login_at DATETIME(6) NULL COMMENT '最近登录时间（UTC+8）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_app_users_username (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='应用用户表';
@@ -29,9 +30,9 @@ CREATE TABLE IF NOT EXISTS platform_accounts (
   external_account_id VARCHAR(128) NULL COMMENT '平台侧账号 ID',
   credential_type VARCHAR(64) NOT NULL COMMENT '凭证类型（如 steam_api_key）',
   credential_value TEXT NOT NULL COMMENT '凭证原始值',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC）',
-  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间（UTC）',
-  last_synced_at DATETIME(6) NULL COMMENT '最近同步时间（UTC）',
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间（UTC+8）',
+  updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间（UTC+8）',
+  last_synced_at DATETIME(6) NULL COMMENT '最近同步时间（UTC+8）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_platform_account_name (platform, account_name),
   KEY idx_platform_external_account (platform, external_account_id)
@@ -45,8 +46,8 @@ CREATE TABLE IF NOT EXISTS owned_games (
   external_game_id VARCHAR(128) NOT NULL COMMENT '平台侧游戏 ID',
   title VARCHAR(512) NOT NULL COMMENT '游戏原始标题',
   normalized_title VARCHAR(512) NOT NULL COMMENT '归一化标题（用于重复检测）',
-  synced_at DATETIME(6) NOT NULL COMMENT '本次同步时间（UTC）',
-  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '记录创建时间（UTC）',
+  synced_at DATETIME(6) NOT NULL COMMENT '本次同步时间（UTC+8）',
+  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '记录创建时间（UTC+8）',
   PRIMARY KEY (id),
   UNIQUE KEY uk_account_external_game (account_id, external_game_id),
   KEY idx_normalized_title (normalized_title),

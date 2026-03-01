@@ -162,3 +162,51 @@
   - `frontend/src/api.ts`
   - `frontend/src/types/api.ts`
 - 说明：后端 `Services` 按 `Auth/Library/Sync/Common` 分层归档，前端 API 入口迁移到 `services` 目录且类型文件命名统一，完成引用修复并通过后端构建与前端类型检查。
+
+11. 2026-03-01 10:13:51 +08:00
+- 变更：后端将 Swagger 排除在登录鉴权之外
+- 调整：
+  - `backend/Program.cs`
+  - `API_CONTRACTS.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：将 Swagger 分支中间件前置到 `UseAuthentication/UseAuthorization` 之前，确保 `/swagger` 路由无需登录访问；业务接口鉴权逻辑保持不变。
+
+12. 2026-03-01 10:33:00 +08:00
+- 变更：统一所有 API 时间展示为 UTC+8 字符串格式并移除 UTC 时间戳展示
+- 新增：
+  - `backend/Services/Common/Utc8DateTimeJsonConverter.cs`
+- 调整：
+  - `backend/Program.cs`
+  - `backend/Controllers/HealthController.cs`
+  - `frontend/src/App.vue`
+  - `API_CONTRACTS.md`
+  - `ARCHITECTURE.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：后端注册全局 `DateTime`/`DateTime?` JSON 转换器，统一返回 `UTC+8` 且格式为 `yyyy-MM-dd HH:mm:ss`；健康检查字段由 `utc` 调整为 `time`；前端表头从 `(UTC)` 改为 `(UTC+8)`，契约文档与架构文档同步更新。
+
+13. 2026-03-01 10:42:26 +08:00
+- 变更：数据库持久化时间改为 UTC+8，SQL 脚本同步调整
+- 调整：
+  - `backend/Services/Common/Utc8DateTimeJsonConverter.cs`
+  - `backend/Services/Auth/AuthService.cs`
+  - `backend/Services/Library/EfCoreGameLibraryStore.cs`
+  - `backend/Data/Entities/AppUserEntity.cs`
+  - `backend/Data/Entities/PlatformAccountEntity.cs`
+  - `backend/Data/Entities/OwnedGameEntity.cs`
+  - `backend/sql/001_init_schema.sql`
+  - `backend/sql/002_backend_queries.sql`
+  - `API_CONTRACTS.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：后端写库时间统一使用 `UTC+8`，并修正时间转换器对 `DateTimeKind.Unspecified` 的处理，避免数据库 `DATETIME` 二次偏移；SQL 脚本显式设置 `time_zone = '+08:00'`，并将 `UTC_TIMESTAMP(6)` 改为 `CURRENT_TIMESTAMP(6)`。
+
+14. 2026-03-01 10:44:00 +08:00
+- 变更：补充历史 UTC 数据迁移 SQL 与契约文档时间戳
+- 调整：
+  - `backend/sql/002_backend_queries.sql`
+  - `API_CONTRACTS.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：在 SQL 参考脚本新增“仅执行一次”的历史时间字段整体 `+8` 小时迁移事务，避免存量数据与新入库 UTC+8 规则混用。

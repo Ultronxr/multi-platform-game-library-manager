@@ -42,7 +42,8 @@ public sealed class EfCoreGameLibraryStore(IDbContextFactory<GameLibraryDbContex
         await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
 
-        var now = DateTime.UtcNow;
+        // 统一以 UTC+8 时间入库，避免数据库层继续存储 UTC。
+        var now = Utc8DateTimeFormatter.NowUtc8();
         var account = await db.PlatformAccounts
             .FirstOrDefaultAsync(
                 x => x.Platform == platform && x.AccountName == safeAccountName,
@@ -127,7 +128,7 @@ public sealed class EfCoreGameLibraryStore(IDbContextFactory<GameLibraryDbContex
                 game.Title,
                 game.Platform,
                 game.AccountName,
-                EnsureUtc(game.SyncedAtUtc)))
+                Utc8DateTimeFormatter.NormalizeToUtc8(game.SyncedAtUtc)))
             .ToList();
     }
 
@@ -152,17 +153,14 @@ public sealed class EfCoreGameLibraryStore(IDbContextFactory<GameLibraryDbContex
                 account.ExternalAccountId,
                 account.CredentialType,
                 MaskCredential(account.CredentialValue),
-                EnsureUtc(account.CreatedAtUtc),
-                EnsureUtc(account.UpdatedAtUtc),
-                account.LastSyncedAtUtc is null ? null : EnsureUtc(account.LastSyncedAtUtc.Value)))
+                Utc8DateTimeFormatter.NormalizeToUtc8(account.CreatedAtUtc),
+                Utc8DateTimeFormatter.NormalizeToUtc8(account.UpdatedAtUtc),
+                account.LastSyncedAtUtc is null ? null : Utc8DateTimeFormatter.NormalizeToUtc8(account.LastSyncedAtUtc.Value)))
             .ToList();
     }
 
     private static string? NormalizeOptional(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static DateTime EnsureUtc(DateTime value) =>
-        value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);
 
     private static string MaskCredential(string credential)
     {

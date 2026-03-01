@@ -1,6 +1,6 @@
 # API 契约文档
 
-> 更新时间：2026-03-01 01:39:28 +08:00
+> 更新时间：2026-03-01 10:44:00 +08:00
 >
 > 服务端项目：`backend/GameLibrary.Api.csproj`
 
@@ -9,9 +9,11 @@
 - Base URL：`http://localhost:5119`（默认本地开发地址）
 - 前缀：所有业务接口均在 `/api` 下
 - 请求/响应格式：`application/json`
-- 时间字段：UTC 时间（ISO 8601）
+- 时间字段：统一返回 `UTC+8` 时间字符串，格式 `yyyy-MM-dd HH:mm:ss`（不返回 ISO 8601 `Z` 时间戳）
+- 说明：部分字段名历史上保留 `Utc` 后缀，但字段值以 `UTC+8` 格式化字符串返回
+- 持久化约定：数据库 `DATETIME` 字段统一按 `UTC+8` 写入与读取（`backend/sql/*.sql` 已显式设置 `time_zone = '+08:00'`）
 - 鉴权方式：`Authorization: Bearer <accessToken>`
-- 默认授权策略：除 `[AllowAnonymous]` 接口外，均要求登录
+- 默认授权策略：除 `[AllowAnonymous]` 接口外，均要求登录；`/swagger` 文档路由不要求登录
 
 ## 2. 通用错误响应
 
@@ -44,7 +46,7 @@
 ```json
 {
   "accessToken": "string",
-  "expiresAtUtc": "2026-03-01T00:00:00Z",
+  "expiresAtUtc": "2026-03-01 08:00:00",
   "username": "string",
   "role": "admin"
 }
@@ -62,7 +64,7 @@
       "title": "string",
       "platform": "Steam",
       "accountName": "string",
-      "syncedAtUtc": "2026-03-01T00:00:00Z"
+      "syncedAtUtc": "2026-03-01 08:00:00"
     }
   ],
   "duplicates": [
@@ -88,7 +90,7 @@
 ```json
 {
   "status": "ok",
-  "utc": "2026-03-01T00:00:00Z"
+  "time": "2026-03-01 08:00:00"
 }
 ```
 
@@ -311,9 +313,9 @@
     "externalAccountId": "7656119...",
     "credentialType": "steam_api_key",
     "credentialPreview": "ABCD****WXYZ",
-    "createdAtUtc": "2026-03-01T00:00:00Z",
-    "updatedAtUtc": "2026-03-01T00:00:00Z",
-    "lastSyncedAtUtc": "2026-03-01T00:00:00Z"
+    "createdAtUtc": "2026-03-01 08:00:00",
+    "updatedAtUtc": "2026-03-01 08:00:00",
+    "lastSyncedAtUtc": "2026-03-01 08:00:00"
   }
 ]
 ```

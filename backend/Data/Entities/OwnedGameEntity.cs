@@ -48,12 +48,12 @@ public sealed class OwnedGameEntity
     public string NormalizedTitle { get; set; } = string.Empty;
 
     /// <summary>
-    /// 同步时间（UTC）。
+    /// 同步时间（UTC+8）。
     /// </summary>
     public DateTime SyncedAtUtc { get; set; }
 
     /// <summary>
-    /// 创建时间（UTC）。
+    /// 创建时间（UTC+8）。
     /// </summary>
     public DateTime CreatedAtUtc { get; set; }
 }

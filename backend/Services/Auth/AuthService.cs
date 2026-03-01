@@ -57,7 +57,7 @@ public sealed class AuthService(
                 "Bootstrap is only available when no users exist.");
         }
 
-        var now = DateTime.UtcNow;
+        var now = Utc8DateTimeFormatter.NowUtc8();
         var user = new AppUserEntity
         {
             Username = request.Username.Trim(),
@@ -105,8 +105,9 @@ public sealed class AuthService(
         }
 
         // 登录成功后回写最近登录时间，便于审计与后续风控。
-        user.LastLoginAtUtc = DateTime.UtcNow;
-        user.UpdatedAtUtc = DateTime.UtcNow;
+        var now = Utc8DateTimeFormatter.NowUtc8();
+        user.LastLoginAtUtc = now;
+        user.UpdatedAtUtc = now;
         await db.SaveChangesAsync(cancellationToken);
 
         var (token, expiresAtUtc) = jwtTokenService.CreateAccessToken(user);
@@ -140,7 +141,7 @@ public sealed class AuthService(
             return ServiceOperationResult.Failure(StatusCodes.Status409Conflict, "Username already exists.");
         }
 
-        var now = DateTime.UtcNow;
+        var now = Utc8DateTimeFormatter.NowUtc8();
         db.Users.Add(new AppUserEntity
         {
             Username = username,

@@ -1,6 +1,6 @@
 # 项目架构文档
 
-> 更新时间：2026-03-01 09:54:35 +08:00
+> 更新时间：2026-03-01 10:33:00 +08:00
 
 ## 1. 总览
 
@@ -56,7 +56,8 @@ multi-platform-game-library-manager/
 │  │  │  ├─ JwtTokenService.cs         # JWT 访问令牌生成服务
 │  │  │  └─ PasswordHashService.cs     # 密码哈希与校验服务
 │  │  ├─ Common/
-│  │  │  └─ ServiceOperationResult.cs  # 服务层标准结果模型
+│  │  │  ├─ ServiceOperationResult.cs  # 服务层标准结果模型
+│  │  │  └─ Utc8DateTimeJsonConverter.cs # 全局 UTC+8 时间序列化/反序列化转换器
 │  │  ├─ Library/                      # 库存查询与持久化服务
 │  │  │  ├─ DuplicateDetector.cs       # 跨平台重复游戏检测服务
 │  │  │  ├─ EfCoreGameLibraryStore.cs  # 基于 EF Core 的库存存储实现

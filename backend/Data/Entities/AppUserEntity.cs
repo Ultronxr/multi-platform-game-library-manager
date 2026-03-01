@@ -31,17 +31,17 @@ public sealed class AppUserEntity
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// 创建时间（UTC）。
+    /// 创建时间（UTC+8）。
     /// </summary>
     public DateTime CreatedAtUtc { get; set; }
 
     /// <summary>
-    /// 更新时间（UTC）。
+    /// 更新时间（UTC+8）。
     /// </summary>
     public DateTime UpdatedAtUtc { get; set; }
 
     /// <summary>
-    /// 最近登录时间（UTC）。
+    /// 最近登录时间（UTC+8）。
     /// </summary>
     public DateTime? LastLoginAtUtc { get; set; }
 }

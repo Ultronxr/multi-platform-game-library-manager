@@ -241,7 +241,7 @@ onMounted(async () => {
               <th>平台账号ID</th>
               <th>凭证类型</th>
               <th>凭证预览</th>
-              <th>上次同步 (UTC)</th>
+              <th>上次同步 (UTC+8)</th>
             </tr>
           </thead>
           <tbody>
@@ -279,7 +279,7 @@ onMounted(async () => {
               <th>游戏</th>
               <th>平台</th>
               <th>账号</th>
-              <th>同步时间 (UTC)</th>
+              <th>同步时间 (UTC+8)</th>
             </tr>
           </thead>
           <tbody>

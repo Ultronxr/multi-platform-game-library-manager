@@ -37,6 +37,8 @@ try
         .AddControllers()
         .AddJsonOptions(options =>
     {
+        options.JsonSerializerOptions.Converters.Add(new Utc8DateTimeJsonConverter());
+        options.JsonSerializerOptions.Converters.Add(new NullableUtc8DateTimeJsonConverter());
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
     builder.Services.AddEndpointsApiExplorer();
@@ -131,9 +133,8 @@ try
     var app = builder.Build();
 
     app.UseCors("Frontend");
-    app.UseAuthentication();
-    app.UseAuthorization();
 
+    // Swagger 文档访问不走登录鉴权，业务 API 仍由后续鉴权中间件统一保护。
     app.UseWhen(
         context => context.Request.Path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase),
         branch =>
@@ -160,6 +161,10 @@ try
                 options.DocumentTitle = "GameLibrary API Docs";
             });
         });
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
     app.MapControllers();
 
     app.Run();

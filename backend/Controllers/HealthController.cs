@@ -1,3 +1,4 @@
+using GameLibrary.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,5 +18,5 @@ public sealed class HealthController : ControllerBase
     /// <returns>健康状态结果。</returns>
     [HttpGet]
     public IActionResult Get() =>
-        Ok(new { status = "ok", utc = DateTime.UtcNow });
+        Ok(new { status = "ok", time = Utc8DateTimeFormatter.Format(DateTime.UtcNow) });
 }
