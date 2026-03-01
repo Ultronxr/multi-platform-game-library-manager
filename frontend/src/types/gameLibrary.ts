@@ -48,6 +48,13 @@ export interface LibraryGamesQuery {
   pageSize: number;
 }
 
+export interface InventoryFilters {
+  gameTitle: string;
+  platform?: string;
+  accountName: string;
+  accountExternalId: string;
+}
+
 export interface LibraryGamesPageResponse {
   pageNumber: number;
   pageSize: number;

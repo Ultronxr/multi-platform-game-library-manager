@@ -367,3 +367,51 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：新增并持久化 Epic `appName`（数据库列 `owned_games.epic_app_name`）；库存统计与分页改为按“同平台 + 同账号 + 同游戏名”聚合主记录，保留组内所有原始条目供展开查看；前端库存表改为可展开行展示同组明细，满足“标记同游戏多个项而非去重删除”的业务要求。
+
+29. 2026-03-01 17:27:07 +08:00
+- 变更：前端改造为后台管理模板（左侧菜单 + 右侧内容区）
+- 调整：
+  - `frontend/src/App.vue`
+  - `frontend/src/style.css`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：认证后页面重构为左右分栏布局，左侧菜单新增“主页 / 平台账号管理 / 详细库存信息”三个板块；主页展示统计与重复预警，账号管理展示同步与账号信息，详细库存展示全量库存表格。
+
+30. 2026-03-01 18:01:12 +08:00
+- 变更：前端结构重构为“独立登录页 + 主布局多路由 + 页面组件化”
+- 新增：
+  - `frontend/src/stores/pinia.ts`
+  - `frontend/src/router/index.ts`
+  - `frontend/src/layouts/MainLayout.vue`
+  - `frontend/src/pages/LoginPage.vue`
+  - `frontend/src/pages/HomePage.vue`
+  - `frontend/src/pages/AccountManagementPage.vue`
+  - `frontend/src/pages/InventoryPage.vue`
+  - `frontend/src/components/auth/LoginFormCard.vue`
+  - `frontend/src/components/auth/BootstrapAdminCard.vue`
+  - `frontend/src/components/home/SummaryMetrics.vue`
+  - `frontend/src/components/home/DuplicateWarningPanel.vue`
+  - `frontend/src/components/accounts/SyncPanels.vue`
+  - `frontend/src/components/accounts/SavedAccountsTable.vue`
+  - `frontend/src/components/accounts/AccountEditModal.vue`
+  - `frontend/src/components/inventory/InventoryFilterPanel.vue`
+  - `frontend/src/components/inventory/InventoryTable.vue`
+- 调整：
+  - `frontend/package.json`
+  - `frontend/package-lock.json`
+  - `frontend/src/App.vue`
+  - `frontend/src/main.ts`
+  - `frontend/src/style.css`
+  - `frontend/src/types/gameLibrary.ts`
+  - `ARCHITECTURE.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：新增 `vue-router` 并将原单页逻辑拆分到路由页面与业务组件；`/login` 作为独立登录页，登录后进入 `/app` 主布局，左侧菜单切换“主页/平台账号管理/详细库存信息”子路由；完成 `vue-tsc` 与提权 `vite build` 构建验证。
+
+31. 2026-03-01 18:04:18 +08:00
+- 变更：补充账号编辑边界处理并完成最终构建复验
+- 调整：
+  - `frontend/src/components/accounts/AccountEditModal.vue`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：账号编辑提交时，`externalAccountId` 为空将明确提交 `null` 以支持清空；复跑前端 `vue-tsc` 与提权 `vite build` 均通过。

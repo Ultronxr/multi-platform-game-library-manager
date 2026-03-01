@@ -1,6 +1,6 @@
 # 项目架构文档
 
-> 更新时间：2026-03-01 11:57:14 +08:00
+> 更新时间：2026-03-01 18:01:12 +08:00
 
 ## 1. 总览
 
@@ -87,14 +87,38 @@ multi-platform-game-library-manager/
 ├─ frontend/                           # Vue 3 前端工程
 │  ├─ node_modules/                    # 前端依赖目录（非业务源码）
 │  ├─ src/                             # 前端源码
-│  │  ├─ App.vue                       # 主界面：登录、同步、列表展示
+│  │  ├─ App.vue                       # 根组件，仅承载路由出口
+│  │  ├─ components/                   # 页面内可复用业务组件
+│  │  │  ├─ accounts/
+│  │  │  │  ├─ AccountEditModal.vue   # 账号编辑弹窗组件
+│  │  │  │  ├─ SavedAccountsTable.vue # 已保存账号表格组件
+│  │  │  │  └─ SyncPanels.vue         # Steam/Epic 同步面板组件
+│  │  │  ├─ auth/
+│  │  │  │  ├─ BootstrapAdminCard.vue # 初始化管理员表单卡片
+│  │  │  │  └─ LoginFormCard.vue      # 登录表单卡片
+│  │  │  ├─ home/
+│  │  │  │  ├─ DuplicateWarningPanel.vue # 重复购买预警组件
+│  │  │  │  └─ SummaryMetrics.vue     # 首页统计卡片组件
+│  │  │  └─ inventory/
+│  │  │     ├─ InventoryFilterPanel.vue # 库存筛选栏组件
+│  │  │     └─ InventoryTable.vue      # 库存表格（含展开行）组件
 │  │  ├─ env.d.ts                      # Vite 环境变量类型声明
+│  │  ├─ layouts/
+│  │  │  └─ MainLayout.vue             # 登录后后台主布局（左侧菜单+右侧内容）
 │  │  ├─ main.ts                       # 前端入口与挂载
+│  │  ├─ pages/                        # 路由页面
+│  │  │  ├─ AccountManagementPage.vue  # 平台账号管理页
+│  │  │  ├─ HomePage.vue               # 主页（统计+重复预警）
+│  │  │  ├─ InventoryPage.vue          # 详细库存信息页
+│  │  │  └─ LoginPage.vue              # 登录页
+│  │  ├─ router/
+│  │  │  └─ index.ts                   # 路由定义与鉴权守卫
 │  │  ├─ services/
 │  │  │  └─ gameLibraryApi.ts          # API 访问封装与鉴权头管理
 │  │  ├─ stores/
 │  │  │  ├─ authStore.ts               # 认证状态管理（Pinia）
-│  │  │  └─ libraryStore.ts            # 库存状态管理（Pinia）
+│  │  │  ├─ libraryStore.ts            # 库存状态管理（Pinia）
+│  │  │  └─ pinia.ts                   # 全局 Pinia 实例
 │  │  ├─ style.css                     # 全局样式
 │  │  └─ types/
 │  │     └─ gameLibrary.ts             # 前端业务类型定义
@@ -118,6 +142,10 @@ multi-platform-game-library-manager/
 - `Services`：封装核心业务与外部平台交互，提供可复用能力。
 - `Data`：负责 EF Core 实体映射与数据库访问。
 - `Models`：用于 API 输入输出和领域数据传递。
+- `frontend/src/router/index.ts`：集中定义前端路由与鉴权守卫，统一处理登录态跳转。
+- `frontend/src/layouts/MainLayout.vue`：后台主框架，负责左侧菜单、顶部用户信息和子页面容器。
+- `frontend/src/pages`：页面级编排层，负责组织页面组件并触发 Store 行为。
+- `frontend/src/components`：业务组件层，拆分登录、同步、统计、表格等可复用 UI 单元。
 - `frontend/src/services/gameLibraryApi.ts`：作为前端接口访问出口，集中处理 token、错误与基础请求逻辑。
 - `frontend/src/stores`：基于 Pinia 管理认证态与库存态，避免页面组件承载复杂状态流程。
 
