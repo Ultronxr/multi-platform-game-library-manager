@@ -324,7 +324,7 @@
 
 ## 5. 前端对接映射
 
-`frontend/src/api.ts` 与后端路径映射如下：
+`frontend/src/services/gameLibraryApi.ts` 与后端路径映射如下：
 
 - `fetchBootstrapStatus` -> `GET /api/auth/bootstrap-status`
 - `bootstrapAdmin` -> `POST /api/auth/bootstrap-admin`

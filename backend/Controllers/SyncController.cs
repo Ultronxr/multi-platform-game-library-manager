@@ -21,7 +21,7 @@ public sealed class SyncController(
     /// <param name="cancellationToken">取消令牌。</param>
     /// <returns>同步结果。</returns>
     [HttpPost("steam")]
-    public async Task<IActionResult> SyncSteam([FromBody] SteamSyncRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> SyncSteamAsync([FromBody] SteamSyncRequest request, CancellationToken cancellationToken)
     {
         var result = await syncService.SyncSteamAsync(request, cancellationToken);
         if (!result.IsSuccess)
@@ -39,7 +39,7 @@ public sealed class SyncController(
     /// <param name="cancellationToken">取消令牌。</param>
     /// <returns>同步结果。</returns>
     [HttpPost("epic")]
-    public async Task<IActionResult> SyncEpic([FromBody] EpicSyncRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> SyncEpicAsync([FromBody] EpicSyncRequest request, CancellationToken cancellationToken)
     {
         var result = await syncService.SyncEpicAsync(request, cancellationToken);
         if (!result.IsSuccess)

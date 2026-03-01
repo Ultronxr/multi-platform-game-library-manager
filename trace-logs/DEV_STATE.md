@@ -1,6 +1,6 @@
 # 开发状态（DEV_STATE）
 
-> 最后更新：2026-03-01 02:18:35 +08:00
+> 最后更新：2026-03-01 10:00:04 +08:00
 
 ## 当前开发进度
 
@@ -11,12 +11,15 @@
 - 已完成：同步更新 `ARCHITECTURE.md` 与 `CHANGELOG_2026-03-01.md`。
 - 已完成：`backend/sql/001_init_schema.sql` 的建表语句为每个字段补充 `COMMENT` 注释，满足 SQL 规范要求。
 - 已完成：重整 `backend/sql/001_init_schema.sql` 与 `backend/sql/002_backend_queries.sql` 的注释风格与分段结构，统一为中文语义说明。
+- 已完成：后端控制器全部 `public async` 方法统一为 `*Async` 命名，满足异步方法命名规范。
+- 已完成：文件与目录结构清洗；后端 `Services` 分为 `Auth/Library/Sync/Common`，前端 API 与类型文件归位并统一命名。
 
 ## 遗留 Bug
 
 - 暂未发现本轮重构引入的功能性回归。
 - 暂未发现新增 SQL 语法错误（未执行数据库实际导入验证）。
 - `002_backend_queries.sql` 为参考查询脚本，当前未在 CI 中做执行级校验。
+- 当前未补充针对“目录迁移后的 import 路径”自动化回归测试，仅依赖编译与类型检查。
 
 ## 未完成 TODO
 
@@ -24,6 +27,7 @@
 - 可补充自动化测试（后端 xUnit + 前端 Vitest）覆盖登录、同步与 401 会话失效流程。
 - 可在数据库环境执行一次 `001_init_schema.sql` 冒烟导入，确认 COMMENT 与字符集在目标 MySQL 版本下表现一致。
 - 可增加 SQL lint 或迁移工具（如 Flyway/Liquibase）来保证后续 DDL 规范持续生效。
+- 可增加 ESLint + 路径别名规则（例如 `@/services`、`@/types`）避免后续目录迁移时出现相对路径脆弱性。
 
 ## 下一步实现思路
 

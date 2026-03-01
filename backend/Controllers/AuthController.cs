@@ -20,7 +20,7 @@ public sealed class AuthController(
     /// <returns>初始化状态。</returns>
     [AllowAnonymous]
     [HttpGet("bootstrap-status")]
-    public async Task<IActionResult> BootstrapStatus(CancellationToken cancellationToken)
+    public async Task<IActionResult> BootstrapStatusAsync(CancellationToken cancellationToken)
     {
         var status = await authService.GetBootstrapStatusAsync(cancellationToken);
         return Ok(status);
@@ -34,7 +34,7 @@ public sealed class AuthController(
     /// <returns>初始化结果。</returns>
     [AllowAnonymous]
     [HttpPost("bootstrap-admin")]
-    public async Task<IActionResult> BootstrapAdmin(
+    public async Task<IActionResult> BootstrapAdminAsync(
         [FromBody] BootstrapAdminRequest request,
         CancellationToken cancellationToken)
     {
@@ -55,7 +55,7 @@ public sealed class AuthController(
     /// <returns>登录结果。</returns>
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.LoginAsync(request, cancellationToken);
         if (!result.IsSuccess)
@@ -74,7 +74,7 @@ public sealed class AuthController(
     /// <returns>创建结果。</returns>
     [Authorize(Roles = "admin")]
     [HttpPost("users")]
-    public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateUserAsync([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.CreateUserAsync(request, cancellationToken);
         if (!result.IsSuccess)

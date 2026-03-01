@@ -19,7 +19,7 @@ public sealed class LibraryController(
     /// <param name="cancellationToken">取消令牌。</param>
     /// <returns>账号集合。</returns>
     [HttpGet("accounts")]
-    public async Task<IActionResult> GetAccounts(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAccountsAsync(CancellationToken cancellationToken)
     {
         var accounts = await libraryQueryService.GetAccountsAsync(cancellationToken);
         return Ok(accounts);
@@ -31,7 +31,7 @@ public sealed class LibraryController(
     /// <param name="cancellationToken">取消令牌。</param>
     /// <returns>库存聚合结果。</returns>
     [HttpGet("library")]
-    public async Task<IActionResult> GetLibrary(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetLibraryAsync(CancellationToken cancellationToken)
     {
         var library = await libraryQueryService.GetLibraryAsync(cancellationToken);
         return Ok(library);

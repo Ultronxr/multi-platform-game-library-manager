@@ -8,8 +8,8 @@ import {
   fetchCurrentUser,
   getAccessToken,
   login
-} from "../api";
-import type { CurrentUserResponse } from "../types/api";
+} from "../services/gameLibraryApi";
+import type { CurrentUserResponse } from "../types/gameLibrary";
 
 /**
  * 认证状态管理：

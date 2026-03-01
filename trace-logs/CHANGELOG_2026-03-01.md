@@ -119,3 +119,46 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：统一 SQL 注释与结构化分段风格；`001_init_schema.sql` 在保留字段级 `COMMENT` 基础上补充表级 `COMMENT`，`002_backend_queries.sql` 明确为参考 DML/查询脚本并统一中文说明。
+
+9. 2026-03-01 09:54:35 +08:00
+- 变更：按开发规范统一后端异步方法命名
+- 调整：
+  - `backend/Controllers/AuthController.cs`
+  - `backend/Controllers/LibraryController.cs`
+  - `backend/Controllers/SyncController.cs`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：将控制器中的 `public async` 方法统一改为 `*Async` 后缀（如 `LoginAsync`、`GetLibraryAsync`、`SyncSteamAsync`），不改变路由与业务行为；后端构建与前端类型检查通过。
+
+10. 2026-03-01 10:00:04 +08:00
+- 变更：按开发规范清洗文件命名与目录结构
+- 调整：
+  - `backend/Services/Auth/AuthOptions.cs`
+  - `backend/Services/Auth/IAuthService.cs`
+  - `backend/Services/Auth/AuthService.cs`
+  - `backend/Services/Auth/JwtTokenService.cs`
+  - `backend/Services/Auth/PasswordHashService.cs`
+  - `backend/Services/Library/DuplicateDetector.cs`
+  - `backend/Services/Library/EfCoreGameLibraryStore.cs`
+  - `backend/Services/Library/IGameLibraryStore.cs`
+  - `backend/Services/Library/ILibraryQueryService.cs`
+  - `backend/Services/Library/LibraryQueryService.cs`
+  - `backend/Services/Library/TitleNormalizer.cs`
+  - `backend/Services/Sync/EpicLibraryClient.cs`
+  - `backend/Services/Sync/SteamOwnedGamesClient.cs`
+  - `backend/Services/Sync/SyncResult.cs`
+  - `backend/Services/Sync/ISyncService.cs`
+  - `backend/Services/Sync/SyncService.cs`
+  - `backend/Services/Common/ServiceOperationResult.cs`
+  - `frontend/src/services/gameLibraryApi.ts`
+  - `frontend/src/stores/authStore.ts`
+  - `frontend/src/stores/libraryStore.ts`
+  - `frontend/src/types/gameLibrary.ts`
+  - `ARCHITECTURE.md`
+  - `API_CONTRACTS.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 删除：
+  - `frontend/src/api.ts`
+  - `frontend/src/types/api.ts`
+- 说明：后端 `Services` 按 `Auth/Library/Sync/Common` 分层归档，前端 API 入口迁移到 `services` 目录且类型文件命名统一，完成引用修复并通过后端构建与前端类型检查。

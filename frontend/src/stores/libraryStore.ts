@@ -6,8 +6,8 @@ import {
   fetchLibrary,
   syncEpic as syncEpicApi,
   syncSteam as syncSteamApi
-} from "../api";
-import type { EpicSyncRequest, LibraryResponse, SavedAccount, SteamSyncRequest } from "../types/api";
+} from "../services/gameLibraryApi";
+import type { EpicSyncRequest, LibraryResponse, SavedAccount, SteamSyncRequest } from "../types/gameLibrary";
 import { useAuthStore } from "./authStore";
 
 /**
