@@ -1,6 +1,6 @@
 # 开发状态（DEV_STATE）
 
-> 最后更新：2026-03-01 13:27:58 +08:00
+> 最后更新：2026-03-01 13:52:15 +08:00
 
 ## 当前开发进度
 
@@ -27,6 +27,7 @@
 - 已完成：按用户要求回滚上一轮日志级别改动，数据库 SQL 与请求流水日志恢复到回滚前配置（`Microsoft.*` 回到 `Info`，移除自定义请求 Debug 中间件与 EF Core Debug 降级）。
 - 已完成：按用户要求仅使用 `nlog.config` 调整日志分层：`Microsoft.EntityFrameworkCore.*`、`Microsoft.AspNetCore.*`、`System.Net.Http.HttpClient.*` 下调到 `Debug` 观察层级，`Microsoft.*` 收敛为 `Warn+`，避免干扰业务 `Info` 日志。
 - 已完成：按用户要求彻底关闭 `Microsoft.AspNetCore.*` 与 `Microsoft.EntityFrameworkCore.*` 日志（通过 NLog `Null` 目标黑洞规则，无代码侵入）。
+- 已完成：修复 Epic 库存游戏名称解析优先级，优先使用 `sandboxName`（顶层 + `metadata` + `catalogItem`）作为游戏名称来源。
 
 ## 遗留 Bug
 

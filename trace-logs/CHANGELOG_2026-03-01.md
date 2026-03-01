@@ -332,3 +332,11 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：在 NLog 新增 `Null` 目标 `blackhole`，并将 `Microsoft.EntityFrameworkCore.*` 与 `Microsoft.AspNetCore.*` 全量路由到 `blackhole`（`minLevel=Trace` + `final=true`），实现这两类日志完全静默。
+
+26. 2026-03-01 13:52:15 +08:00
+- 变更：修复 Epic 库存游戏名称解析优先级
+- 调整：
+  - `backend/Services/Sync/EpicLibraryClient.cs`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：`ResolveTitle` 增加 `sandboxName` 最高优先级（同时覆盖顶层、`metadata`、`catalogItem` 三个层级），确保 Epic 返回记录中优先使用 `sandboxName` 作为游戏名称。

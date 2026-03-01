@@ -121,7 +121,8 @@ public sealed class EpicLibraryClient(
     private static string? ResolveTitle(JsonElement item)
     {
         var directTitle =
-            ReadString(item, "title")
+            ReadString(item, "sandboxName")
+            ?? ReadString(item, "title")
             ?? ReadString(item, "displayName")
             ?? ReadString(item, "appName");
 
@@ -133,7 +134,8 @@ public sealed class EpicLibraryClient(
         if (item.TryGetProperty("metadata", out var metadata) &&
             metadata.ValueKind == JsonValueKind.Object)
         {
-            return ReadString(metadata, "title")
+            return ReadString(metadata, "sandboxName")
+                ?? ReadString(metadata, "title")
                 ?? ReadString(metadata, "displayName")
                 ?? ReadString(metadata, "appName");
         }
@@ -141,7 +143,8 @@ public sealed class EpicLibraryClient(
         if (item.TryGetProperty("catalogItem", out var catalogItem) &&
             catalogItem.ValueKind == JsonValueKind.Object)
         {
-            return ReadString(catalogItem, "title")
+            return ReadString(catalogItem, "sandboxName")
+                ?? ReadString(catalogItem, "title")
                 ?? ReadString(catalogItem, "name");
         }
 
