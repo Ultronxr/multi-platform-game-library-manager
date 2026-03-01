@@ -230,3 +230,16 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：后端新增 `/api/accounts/{id}/resync|PUT|DELETE` 接口，支持使用已保存凭证重拉库存、编辑账号信息（含凭证）与删除账号（级联删除库存）；前端在账号表格新增“重拉库存/修改/删除”操作列并接入 Pinia 状态流。
+
+16. 2026-03-01 11:36:27 +08:00
+- 变更：前端表单/表格改造为 Ant Design Vue 组件并完成视觉重构
+- 调整：
+  - `frontend/package.json`
+  - `frontend/package-lock.json`
+  - `frontend/src/main.ts`
+  - `frontend/src/App.vue`
+  - `frontend/src/style.css`
+  - `ARCHITECTURE.md`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：引入 `ant-design-vue` 与 `@ant-design/icons-vue`，将登录/初始化/同步表单、账号与库存表格重写为 Ant 组件（`Form`/`Table`/`Card`/`Modal` 等），保留原有业务交互并增强操作反馈；前端类型检查通过，受环境限制 `vite build` 因 `spawn EPERM` 未能执行。

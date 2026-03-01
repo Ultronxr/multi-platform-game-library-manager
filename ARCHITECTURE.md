@@ -1,13 +1,13 @@
 # 项目架构文档
 
-> 更新时间：2026-03-01 11:18:44 +08:00
+> 更新时间：2026-03-01 11:36:27 +08:00
 
 ## 1. 总览
 
 - 项目名称：`multi-platform-game-library-manager`
 - 架构形态：前后端分离
 - 后端：`ASP.NET Core Web API (.NET 9)` + `EF Core (MySQL 5.7.44)`
-- 前端：`Vue 3 + TypeScript + Vite`
+- 前端：`Vue 3 + TypeScript + Vite + Ant Design Vue`
 - 核心能力：账号鉴权、Steam/Epic 库存同步、跨平台重复游戏识别
 
 ## 2. 目录树与职责

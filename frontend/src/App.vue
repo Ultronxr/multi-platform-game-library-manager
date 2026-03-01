@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { storeToRefs } from "pinia";
+import { message } from "ant-design-vue";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  FireOutlined,
+  ReloadOutlined,
+  SyncOutlined,
+  UserOutlined
+} from "@ant-design/icons-vue";
+import type { OwnedGame, SavedAccount } from "./types/gameLibrary";
 import { useAuthStore } from "./stores/authStore";
 import { useLibraryStore } from "./stores/libraryStore";
-import type { SavedAccount } from "./types/gameLibrary";
 
 const authStore = useAuthStore();
 const libraryStore = useLibraryStore();
@@ -17,37 +26,58 @@ const {
   errorMessage,
   isAuthenticated
 } = storeToRefs(authStore);
-
 const { library, accounts, loading, syncingSteam, syncingEpic, hasDuplicates } = storeToRefs(libraryStore);
 
 const loginForm = reactive({
   username: "",
   password: ""
 });
-
 const bootstrapForm = reactive({
   setupToken: "",
   username: "",
   password: ""
 });
-
 const steamForm = reactive({
   steamId: "",
   apiKey: "",
   accountName: ""
 });
-
 const epicForm = reactive({
   accessToken: "",
   accountName: ""
 });
 
+const accountEditModalOpen = ref(false);
 const editingAccountId = ref<number | null>(null);
 const accountEditForm = reactive({
   accountName: "",
   externalAccountId: "",
   credentialValue: ""
 });
+
+const editingAccount = computed(() =>
+  accounts.value.find((account) => account.id === editingAccountId.value) ?? null
+);
+const editingAccountLoading = computed(() =>
+  editingAccountId.value !== null && libraryStore.isAccountActionLoading(editingAccountId.value)
+);
+
+const accountTableColumns = [
+  { title: "平台", dataIndex: "platform", key: "platform", width: 90 },
+  { title: "账号名称", dataIndex: "accountName", key: "accountName", width: 160 },
+  { title: "平台账号ID", dataIndex: "externalAccountId", key: "externalAccountId", width: 170 },
+  { title: "凭证类型", dataIndex: "credentialType", key: "credentialType", width: 150 },
+  { title: "凭证预览", dataIndex: "credentialPreview", key: "credentialPreview", width: 180 },
+  { title: "上次同步 (UTC+8)", dataIndex: "lastSyncedAtUtc", key: "lastSyncedAtUtc", width: 170 },
+  { title: "操作", key: "actions", width: 260, fixed: "right" as const }
+];
+
+const gameTableColumns = [
+  { title: "游戏", dataIndex: "title", key: "title", ellipsis: true },
+  { title: "平台", dataIndex: "platform", key: "platform", width: 100 },
+  { title: "账号", dataIndex: "accountName", key: "accountName", width: 160 },
+  { title: "同步时间 (UTC+8)", dataIndex: "syncedAtUtc", key: "syncedAtUtc", width: 170 }
+];
 
 /**
  * 退出登录并清理页面数据。
@@ -58,10 +88,10 @@ function logout(): void {
 }
 
 /**
- * 手动刷新库存列表。
+ * 手动刷新库存与账号列表。
  */
 async function refreshLibrary(): Promise<void> {
-  await libraryStore.loadLibrary();
+  await libraryStore.loadProtectedData();
 }
 
 /**
@@ -85,7 +115,6 @@ async function onBootstrapAdmin(): Promise<void> {
     bootstrapForm.username,
     bootstrapForm.password
   );
-
   if (!success) {
     return;
   }
@@ -118,7 +147,7 @@ async function onSyncEpic(): Promise<void> {
 }
 
 /**
- * 打开账号编辑表单并回填当前值。
+ * 打开账号编辑弹窗并回填当前值。
  * @param account 已保存账号行数据。
  */
 function openEditAccount(account: SavedAccount): void {
@@ -126,12 +155,14 @@ function openEditAccount(account: SavedAccount): void {
   accountEditForm.accountName = account.accountName;
   accountEditForm.externalAccountId = account.externalAccountId ?? "";
   accountEditForm.credentialValue = "";
+  accountEditModalOpen.value = true;
 }
 
 /**
- * 取消编辑并清空临时表单。
+ * 关闭账号编辑弹窗并清空临时表单。
  */
-function cancelEditAccount(): void {
+function closeEditAccountModal(): void {
+  accountEditModalOpen.value = false;
   editingAccountId.value = null;
   accountEditForm.accountName = "";
   accountEditForm.externalAccountId = "";
@@ -140,42 +171,58 @@ function cancelEditAccount(): void {
 
 /**
  * 提交账号编辑。
- * @param accountId 账号主键。
  */
-async function submitEditAccount(accountId: number): Promise<void> {
-  const success = await libraryStore.updateSavedAccount(accountId, {
+async function submitEditAccount(): Promise<void> {
+  if (editingAccountId.value === null) {
+    return;
+  }
+
+  const success = await libraryStore.updateSavedAccount(editingAccountId.value, {
     accountName: accountEditForm.accountName,
     externalAccountId: accountEditForm.externalAccountId,
     credentialValue: accountEditForm.credentialValue || undefined
   });
-
-  if (success) {
-    cancelEditAccount();
+  if (!success) {
+    return;
   }
+
+  message.success("账号信息已更新");
+  closeEditAccountModal();
 }
 
 /**
  * 一键重拉指定账号库存。
- * @param accountId 账号主键。
+ * @param account 已保存账号。
  */
-async function onResyncAccount(accountId: number): Promise<void> {
-  await libraryStore.resyncSavedAccount(accountId);
+async function onResyncAccount(account: SavedAccount): Promise<void> {
+  const success = await libraryStore.resyncSavedAccount(account.id);
+  if (success) {
+    message.success(`已完成 ${account.accountName} 的库存重拉`);
+  }
 }
 
 /**
  * 删除指定账号及其库存数据。
- * @param accountId 账号主键。
+ * @param account 已保存账号。
  */
-async function onDeleteAccount(accountId: number): Promise<void> {
-  const confirmed = window.confirm("确认删除该账号及其关联库存吗？此操作不可撤销。");
-  if (!confirmed) {
+async function onDeleteAccount(account: SavedAccount): Promise<void> {
+  const success = await libraryStore.deleteSavedAccount(account.id);
+  if (!success) {
     return;
   }
 
-  const success = await libraryStore.deleteSavedAccount(accountId);
-  if (success && editingAccountId.value === accountId) {
-    cancelEditAccount();
+  message.success(`已删除账号 ${account.accountName}`);
+  if (editingAccountId.value === account.id) {
+    closeEditAccountModal();
   }
+}
+
+/**
+ * 生成库存行主键，避免同名游戏冲突。
+ * @param game 游戏记录。
+ */
+function gameRowKey(game: OwnedGame): string {
+  return `${game.platform}-${game.accountName}-${game.externalId}`;
 }
 
 /**
@@ -192,234 +239,250 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="page">
+  <main class="app-shell">
     <section class="hero">
-      <p class="eyebrow">Multi-Platform</p>
-      <h1>跨平台已拥有游戏管理器</h1>
-      <p class="subtitle">当前支持 Steam、Epic，后续可扩展更多平台。</p>
-      <div v-if="isAuthenticated" class="hero-user">
-        <span>当前用户：{{ currentUser?.username }}（{{ currentUser?.role }}）</span>
-        <button class="ghost" @click="logout()">退出登录</button>
+      <div>
+        <p class="hero-tag">Multi-Platform Game Hub</p>
+        <h1>跨平台已拥有游戏管理器</h1>
+        <p>统一管理 Steam / Epic 库存，快速发现重复购买。</p>
       </div>
+      <a-space v-if="isAuthenticated">
+        <a-tag color="blue">
+          <UserOutlined />
+          {{ currentUser?.username }}（{{ currentUser?.role }}）
+        </a-tag>
+        <a-button @click="logout">退出登录</a-button>
+      </a-space>
     </section>
 
-    <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+    <a-alert v-if="errorMessage" :message="errorMessage" type="error" show-icon />
 
-    <section v-if="authLoading" class="panel full">
-      <h2>正在校验登录状态...</h2>
-    </section>
+    <a-card v-if="authLoading" class="loading-card">
+      <a-spin tip="正在校验登录状态..." />
+    </a-card>
 
     <template v-else-if="!isAuthenticated">
-      <section class="panel auth-panel">
-        <h2>用户登录</h2>
-        <label>
-          用户名
-          <input v-model="loginForm.username" placeholder="admin" />
-        </label>
-        <label>
-          密码
-          <input v-model="loginForm.password" type="password" placeholder="请输入密码" />
-        </label>
-        <button :disabled="authenticating" @click="onLogin">
-          {{ authenticating ? "登录中..." : "登录" }}
-        </button>
-      </section>
+      <section class="grid two">
+        <a-card title="用户登录" :bordered="false" class="surface-card">
+          <a-form layout="vertical" :model="loginForm" @finish="onLogin">
+            <a-form-item label="用户名">
+              <a-input v-model:value="loginForm.username" placeholder="admin" />
+            </a-form-item>
+            <a-form-item label="密码">
+              <a-input-password v-model:value="loginForm.password" placeholder="请输入密码" />
+            </a-form-item>
+            <a-button type="primary" html-type="submit" block :loading="authenticating">
+              {{ authenticating ? "登录中..." : "登录" }}
+            </a-button>
+          </a-form>
+        </a-card>
 
-      <section v-if="bootstrapEnabled" class="panel auth-panel">
-        <h2>初始化管理员（仅首次）</h2>
-        <label>
-          Setup Token
-          <input v-model="bootstrapForm.setupToken" placeholder="服务端配置的 BootstrapToken" />
-        </label>
-        <label>
-          管理员用户名
-          <input v-model="bootstrapForm.username" placeholder="admin" />
-        </label>
-        <label>
-          管理员密码
-          <input v-model="bootstrapForm.password" type="password" placeholder="至少8位" />
-        </label>
-        <button :disabled="bootstrapping" @click="onBootstrapAdmin">
-          {{ bootstrapping ? "初始化中..." : "创建并登录管理员" }}
-        </button>
+        <a-card
+          v-if="bootstrapEnabled"
+          title="初始化管理员（仅首次）"
+          :bordered="false"
+          class="surface-card"
+        >
+          <a-form layout="vertical" :model="bootstrapForm" @finish="onBootstrapAdmin">
+            <a-form-item label="Setup Token">
+              <a-input v-model:value="bootstrapForm.setupToken" placeholder="服务端配置的 BootstrapToken" />
+            </a-form-item>
+            <a-form-item label="管理员用户名">
+              <a-input v-model:value="bootstrapForm.username" placeholder="admin" />
+            </a-form-item>
+            <a-form-item label="管理员密码">
+              <a-input-password v-model:value="bootstrapForm.password" placeholder="至少8位" />
+            </a-form-item>
+            <a-button type="primary" html-type="submit" block :loading="bootstrapping">
+              {{ bootstrapping ? "初始化中..." : "创建并登录管理员" }}
+            </a-button>
+          </a-form>
+        </a-card>
       </section>
     </template>
 
     <template v-else>
-      <section class="panel-grid">
-        <article class="panel">
-          <h2>同步 Steam 库存</h2>
-          <label>
-            SteamID
-            <input v-model="steamForm.steamId" placeholder="7656119..." />
-          </label>
-          <label>
-            账号别名（可选）
-            <input v-model="steamForm.accountName" placeholder="Main Steam" />
-          </label>
-          <label>
-            API Key（可选，后端已配置可不填）
-            <input v-model="steamForm.apiKey" placeholder="Steam Web API Key" />
-          </label>
-          <button :disabled="syncingSteam" @click="onSyncSteam">
-            {{ syncingSteam ? "同步中..." : "同步 Steam" }}
-          </button>
-        </article>
+      <section class="grid two">
+        <a-card title="同步 Steam 库存" :bordered="false" class="surface-card">
+          <a-form layout="vertical" :model="steamForm" @finish="onSyncSteam">
+            <a-form-item label="SteamID">
+              <a-input v-model:value="steamForm.steamId" placeholder="7656119..." />
+            </a-form-item>
+            <a-form-item label="账号别名（可选）">
+              <a-input v-model:value="steamForm.accountName" placeholder="Main Steam" />
+            </a-form-item>
+            <a-form-item label="API Key（可选，后端已配置可不填）">
+              <a-input v-model:value="steamForm.apiKey" placeholder="Steam Web API Key" />
+            </a-form-item>
+            <a-button type="primary" html-type="submit" block :loading="syncingSteam">
+              <template #icon><SyncOutlined /></template>
+              {{ syncingSteam ? "同步中..." : "同步 Steam" }}
+            </a-button>
+          </a-form>
+        </a-card>
 
-        <article class="panel">
-          <h2>同步 Epic 库存</h2>
-          <label>
-            Access Token
-            <textarea
-              v-model="epicForm.accessToken"
-              rows="4"
-              placeholder="登录 Epic 后获得的 Bearer Token"
-            />
-          </label>
-          <label>
-            账号别名（可选）
-            <input v-model="epicForm.accountName" placeholder="Main Epic" />
-          </label>
-          <button :disabled="syncingEpic" @click="onSyncEpic">
-            {{ syncingEpic ? "同步中..." : "同步 Epic" }}
-          </button>
-        </article>
+        <a-card title="同步 Epic 库存" :bordered="false" class="surface-card">
+          <a-form layout="vertical" :model="epicForm" @finish="onSyncEpic">
+            <a-form-item label="Access Token">
+              <a-textarea
+                v-model:value="epicForm.accessToken"
+                :auto-size="{ minRows: 4, maxRows: 6 }"
+                placeholder="登录 Epic 后获得的 Bearer Token"
+              />
+            </a-form-item>
+            <a-form-item label="账号别名（可选）">
+              <a-input v-model:value="epicForm.accountName" placeholder="Main Epic" />
+            </a-form-item>
+            <a-button type="primary" html-type="submit" block :loading="syncingEpic">
+              <template #icon><SyncOutlined /></template>
+              {{ syncingEpic ? "同步中..." : "同步 Epic" }}
+            </a-button>
+          </a-form>
+        </a-card>
       </section>
 
-      <section class="summary">
-        <div class="metric">
-          <span>总游戏数</span>
-          <strong>{{ library?.totalGames ?? 0 }}</strong>
-        </div>
-        <div class="metric warning">
-          <span>跨平台重复组</span>
-          <strong>{{ library?.duplicateGroups ?? 0 }}</strong>
-        </div>
-        <button class="ghost" :disabled="loading" @click="refreshLibrary">
-          {{ loading ? "刷新中..." : "刷新库存" }}
-        </button>
+      <section class="grid three">
+        <a-card class="metric-card" :bordered="false">
+          <a-statistic title="总游戏数" :value="library?.totalGames ?? 0" />
+        </a-card>
+        <a-card class="metric-card" :bordered="false">
+          <a-statistic title="跨平台重复组" :value="library?.duplicateGroups ?? 0">
+            <template #prefix><FireOutlined /></template>
+          </a-statistic>
+        </a-card>
+        <a-card class="metric-card action-card" :bordered="false">
+          <a-button type="primary" size="large" :loading="loading" @click="refreshLibrary">
+            <template #icon><ReloadOutlined /></template>
+            {{ loading ? "刷新中..." : "刷新库存" }}
+          </a-button>
+        </a-card>
       </section>
 
-      <section class="panel full">
-        <h2>已保存账号与登录信息（掩码）</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>平台</th>
-              <th>账号名称</th>
-              <th>平台账号ID</th>
-              <th>凭证类型</th>
-              <th>凭证预览</th>
-              <th>上次同步 (UTC+8)</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="account in accounts" :key="account.id">
-              <td>{{ account.platform }}</td>
-              <td>
-                <template v-if="editingAccountId === account.id">
-                  <input v-model="accountEditForm.accountName" placeholder="账号名称" />
-                </template>
-                <template v-else>
-                  {{ account.accountName }}
-                </template>
-              </td>
-              <td>
-                <template v-if="editingAccountId === account.id">
-                  <input v-model="accountEditForm.externalAccountId" placeholder="平台账号ID" />
-                </template>
-                <template v-else>
-                  {{ account.externalAccountId || "-" }}
-                </template>
-              </td>
-              <td>{{ account.credentialType }}</td>
-              <td>
-                <template v-if="editingAccountId === account.id">
-                  <input
-                    v-model="accountEditForm.credentialValue"
-                    type="password"
-                    placeholder="留空表示不修改凭证"
-                  />
-                </template>
-                <template v-else>
-                  <code>{{ account.credentialPreview }}</code>
-                </template>
-              </td>
-              <td>{{ account.lastSyncedAtUtc || "-" }}</td>
-              <td class="actions">
-                <template v-if="editingAccountId === account.id">
-                  <button
-                    :disabled="libraryStore.isAccountActionLoading(account.id)"
-                    @click="submitEditAccount(account.id)"
+      <a-card title="已保存账号与登录信息（掩码）" :bordered="false" class="surface-card">
+        <a-table
+          :columns="accountTableColumns"
+          :data-source="accounts"
+          :scroll="{ x: 1200 }"
+          :pagination="false"
+          size="middle"
+          row-key="id"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'externalAccountId'">
+              {{ record.externalAccountId || "-" }}
+            </template>
+            <template v-else-if="column.key === 'credentialPreview'">
+              <a-typography-text code>{{ record.credentialPreview }}</a-typography-text>
+            </template>
+            <template v-else-if="column.key === 'lastSyncedAtUtc'">
+              {{ record.lastSyncedAtUtc || "-" }}
+            </template>
+            <template v-else-if="column.key === 'actions'">
+              <a-space wrap>
+                <a-button
+                  size="small"
+                  type="primary"
+                  :loading="libraryStore.isAccountActionLoading(record.id)"
+                  @click="onResyncAccount(record)"
+                >
+                  <template #icon><ReloadOutlined /></template>
+                  重拉库存
+                </a-button>
+                <a-button
+                  size="small"
+                  :disabled="libraryStore.isAccountActionLoading(record.id)"
+                  @click="openEditAccount(record)"
+                >
+                  <template #icon><EditOutlined /></template>
+                  修改
+                </a-button>
+                <a-popconfirm
+                  title="确认删除该账号及其关联库存吗？"
+                  ok-text="删除"
+                  cancel-text="取消"
+                  @confirm="onDeleteAccount(record)"
+                >
+                  <a-button
+                    size="small"
+                    danger
+                    :disabled="libraryStore.isAccountActionLoading(record.id)"
                   >
-                    保存
-                  </button>
-                  <button class="ghost" @click="cancelEditAccount">取消</button>
-                </template>
-                <template v-else>
-                  <button
-                    :disabled="libraryStore.isAccountActionLoading(account.id)"
-                    @click="onResyncAccount(account.id)"
-                  >
-                    {{ libraryStore.isAccountActionLoading(account.id) ? "处理中..." : "重拉库存" }}
-                  </button>
-                  <button
-                    class="ghost"
-                    :disabled="libraryStore.isAccountActionLoading(account.id)"
-                    @click="openEditAccount(account)"
-                  >
-                    修改
-                  </button>
-                  <button
-                    class="ghost danger"
-                    :disabled="libraryStore.isAccountActionLoading(account.id)"
-                    @click="onDeleteAccount(account.id)"
-                  >
+                    <template #icon><DeleteOutlined /></template>
                     删除
-                  </button>
-                </template>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+                  </a-button>
+                </a-popconfirm>
+              </a-space>
+            </template>
+          </template>
+        </a-table>
+      </a-card>
 
-      <section v-if="hasDuplicates" class="panel duplicates">
-        <h2>重复购买预警</h2>
-        <div v-for="group in library?.duplicates ?? []" :key="group.normalizedTitle" class="dup-group">
-          <h3>{{ group.games[0]?.title }}</h3>
-          <ul>
-            <li v-for="game in group.games" :key="`${game.platform}-${game.accountName}-${game.externalId}`">
-              <strong>{{ game.platform }}</strong>
-              <span>{{ game.accountName }}</span>
-              <code>{{ game.externalId }}</code>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <a-card v-if="hasDuplicates" title="重复购买预警" :bordered="false" class="surface-card">
+        <a-collapse ghost>
+          <a-collapse-panel
+            v-for="group in library?.duplicates ?? []"
+            :key="group.normalizedTitle"
+            :header="group.games[0]?.title || group.normalizedTitle"
+          >
+            <a-list :data-source="group.games" size="small">
+              <template #renderItem="{ item }">
+                <a-list-item>
+                  <a-space>
+                    <a-tag color="geekblue">{{ item.platform }}</a-tag>
+                    <span>{{ item.accountName }}</span>
+                    <a-typography-text code>{{ item.externalId }}</a-typography-text>
+                  </a-space>
+                </a-list-item>
+              </template>
+            </a-list>
+          </a-collapse-panel>
+        </a-collapse>
+      </a-card>
 
-      <section class="panel full">
-        <h2>全部库存</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>游戏</th>
-              <th>平台</th>
-              <th>账号</th>
-              <th>同步时间 (UTC+8)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="game in library?.games ?? []" :key="`${game.platform}-${game.accountName}-${game.externalId}`">
-              <td>{{ game.title }}</td>
-              <td>{{ game.platform }}</td>
-              <td>{{ game.accountName }}</td>
-              <td>{{ game.syncedAtUtc }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <a-card title="全部库存" :bordered="false" class="surface-card">
+        <a-table
+          :columns="gameTableColumns"
+          :data-source="library?.games ?? []"
+          :loading="loading"
+          :pagination="{ pageSize: 20, showSizeChanger: true }"
+          :scroll="{ x: 900 }"
+          size="middle"
+          :row-key="gameRowKey"
+        />
+      </a-card>
     </template>
+
+    <a-modal
+      v-model:open="accountEditModalOpen"
+      title="编辑已保存账号"
+      ok-text="保存修改"
+      cancel-text="取消"
+      :confirm-loading="editingAccountLoading"
+      @ok="submitEditAccount"
+      @cancel="closeEditAccountModal"
+    >
+      <a-form layout="vertical" :model="accountEditForm">
+        <a-form-item label="平台">
+          <a-input :value="editingAccount?.platform ?? '-'" disabled />
+        </a-form-item>
+        <a-form-item label="账号名称">
+          <a-input v-model:value="accountEditForm.accountName" placeholder="请输入账号名称" />
+        </a-form-item>
+        <a-form-item label="平台账号ID">
+          <a-input
+            v-model:value="accountEditForm.externalAccountId"
+            placeholder="Steam 建议填写 SteamID；Epic 可留空"
+          />
+        </a-form-item>
+        <a-form-item label="新凭证（留空表示不修改）">
+          <a-input-password v-model:value="accountEditForm.credentialValue" placeholder="请输入新凭证" />
+        </a-form-item>
+      </a-form>
+      <a-alert
+        type="warning"
+        show-icon
+        :message="`提示：${editingAccount?.platform === 'Steam' ? 'Steam 账号必须保留平台账号ID。' : '如不需要更新凭证，请保持凭证输入框为空。'}`"
+      />
+    </a-modal>
   </main>
 </template>
