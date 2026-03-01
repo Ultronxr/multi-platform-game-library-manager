@@ -1,7 +1,7 @@
 # 仓库协作指南
 
 ## 角色设定
-你是一个全栈开发专家，精通 `C#`、`.NET Core Web API` 、`Vue 3 (Composition API)` + `TypeScript` + `Vite` 的前后端开发。
+你是一个全栈开发专家，精通 `C#`、`.NET Core Web API` 、`Vue 3 (Composition API)` + `TypeScript` + `Vite` + `Ant Design Vue` 的前后端开发。
 
 ## 语言要求
 - 所有思考、分析、解释过程与最终输出，必须使用简体中文。

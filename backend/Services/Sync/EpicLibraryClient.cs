@@ -6,7 +6,9 @@ namespace GameLibrary.Api.Services;
 /// <summary>
 /// Epic 已拥有游戏拉取客户端。
 /// </summary>
-public sealed class EpicLibraryClient(HttpClient httpClient)
+public sealed class EpicLibraryClient(
+    HttpClient httpClient,
+    ILogger<EpicLibraryClient> logger)
 {
     /// <summary>
     /// 调用 Epic 库存接口获取账号已拥有游戏。
@@ -16,36 +18,55 @@ public sealed class EpicLibraryClient(HttpClient httpClient)
     /// <returns>同步结果。</returns>
     public async Task<SyncResult> GetOwnedGamesAsync(string accessToken, CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(
-            HttpMethod.Get,
-            "https://library-service.live.use1a.on.epicgames.com/library/api/public/items?includeMetadata=true");
+        const string url =
+            "https://library-service.live.use1a.on.epicgames.com/library/api/public/items?includeMetadata=true";
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
-        using var response = await httpClient.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            return SyncResult.Failure($"Epic library request failed: {(int)response.StatusCode} {response.ReasonPhrase}");
-        }
+            using var response = await httpClient.SendAsync(request, cancellationToken);
+            var rawContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogDebug(
+                "Epic API 响应：Url={Url}; StatusCode={StatusCode}; ReasonPhrase={ReasonPhrase}; Body={Body}",
+                url,
+                (int)response.StatusCode,
+                response.ReasonPhrase,
+                rawContent);
 
-        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var json = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-
-        var items = ExtractItems(json.RootElement);
-        var games = new List<OwnedGame>();
-        foreach (var item in items)
-        {
-            var title = ResolveTitle(item);
-            if (string.IsNullOrWhiteSpace(title))
+            if (!response.IsSuccessStatusCode)
             {
-                continue;
+                return SyncResult.Failure($"Epic library request failed: {(int)response.StatusCode} {response.ReasonPhrase}");
             }
 
-            var externalId = ResolveId(item) ?? title;
-            games.Add(new OwnedGame(externalId, title, GamePlatform.Epic, string.Empty, DateTime.UtcNow));
-        }
+            using var json = JsonDocument.Parse(rawContent);
 
-        return SyncResult.Success(games);
+            var items = ExtractItems(json.RootElement);
+            var games = new List<OwnedGame>();
+            foreach (var item in items)
+            {
+                var title = ResolveTitle(item);
+                if (string.IsNullOrWhiteSpace(title))
+                {
+                    continue;
+                }
+
+                var externalId = ResolveId(item) ?? title;
+                games.Add(new OwnedGame(externalId, title, GamePlatform.Epic, string.Empty, DateTime.UtcNow));
+            }
+
+            return SyncResult.Success(games);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException)
+        {
+            logger.LogDebug(
+                ex,
+                "Epic API 请求异常：Url={Url}; Error={Error}",
+                url,
+                ex.Message);
+            throw;
+        }
     }
 
     private static IEnumerable<JsonElement> ExtractItems(JsonElement root)
