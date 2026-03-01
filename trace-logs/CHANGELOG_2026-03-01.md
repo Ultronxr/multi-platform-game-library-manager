@@ -243,3 +243,12 @@
   - `trace-logs/CHANGELOG_2026-03-01.md`
   - `trace-logs/DEV_STATE.md`
 - 说明：引入 `ant-design-vue` 与 `@ant-design/icons-vue`，将登录/初始化/同步表单、账号与库存表格重写为 Ant 组件（`Form`/`Table`/`Card`/`Modal` 等），保留原有业务交互并增强操作反馈；前端类型检查通过，受环境限制 `vite build` 因 `spawn EPERM` 未能执行。
+
+17. 2026-03-01 11:46:07 +08:00
+- 变更：新增游戏库存多维度筛选能力（游戏名/平台/账号名/账号ID）
+- 调整：
+  - `frontend/src/App.vue`
+  - `frontend/src/style.css`
+  - `trace-logs/CHANGELOG_2026-03-01.md`
+  - `trace-logs/DEV_STATE.md`
+- 说明：在“全部库存”区域新增筛选栏，采用“文本模糊查询 + 平台下拉选择”组合；筛选维度包含游戏名称、平台、账号名称、账号ID，并显示筛选结果计数与一键重置。

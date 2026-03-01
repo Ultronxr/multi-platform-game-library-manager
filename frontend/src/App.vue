@@ -14,6 +14,10 @@ import type { OwnedGame, SavedAccount } from "./types/gameLibrary";
 import { useAuthStore } from "./stores/authStore";
 import { useLibraryStore } from "./stores/libraryStore";
 
+type InventoryGameRow = OwnedGame & {
+  accountExternalId: string;
+};
+
 const authStore = useAuthStore();
 const libraryStore = useLibraryStore();
 
@@ -54,6 +58,12 @@ const accountEditForm = reactive({
   externalAccountId: "",
   credentialValue: ""
 });
+const inventoryFilters = reactive({
+  gameTitle: "",
+  platform: undefined as string | undefined,
+  accountName: "",
+  accountExternalId: ""
+});
 
 const editingAccount = computed(() =>
   accounts.value.find((account) => account.id === editingAccountId.value) ?? null
@@ -76,8 +86,63 @@ const gameTableColumns = [
   { title: "游戏", dataIndex: "title", key: "title", ellipsis: true },
   { title: "平台", dataIndex: "platform", key: "platform", width: 100 },
   { title: "账号", dataIndex: "accountName", key: "accountName", width: 160 },
+  { title: "账号ID", dataIndex: "accountExternalId", key: "accountExternalId", width: 180 },
   { title: "同步时间 (UTC+8)", dataIndex: "syncedAtUtc", key: "syncedAtUtc", width: 170 }
 ];
+const gamePlatformOptions = computed(() => {
+  const options = new Set<string>();
+  for (const game of library.value?.games ?? []) {
+    options.add(game.platform);
+  }
+
+  return [...options]
+    .sort((a, b) => a.localeCompare(b))
+    .map((platform) => ({ label: platform, value: platform }));
+});
+const accountExternalIdByKey = computed(() => {
+  const mapping = new Map<string, string>();
+  for (const account of accounts.value) {
+    const key = `${account.platform}|${account.accountName}`;
+    mapping.set(key, account.externalAccountId?.trim() || "-");
+  }
+
+  return mapping;
+});
+const allGamesForView = computed<InventoryGameRow[]>(() =>
+  (library.value?.games ?? []).map((game) => {
+    const key = `${game.platform}|${game.accountName}`;
+    return {
+      ...game,
+      accountExternalId: accountExternalIdByKey.value.get(key) ?? "-"
+    };
+  })
+);
+const filteredGames = computed<InventoryGameRow[]>(() => {
+  const gameTitleKeyword = inventoryFilters.gameTitle.trim().toLowerCase();
+  const accountNameKeyword = inventoryFilters.accountName.trim().toLowerCase();
+  const accountIdKeyword = inventoryFilters.accountExternalId.trim().toLowerCase();
+  const platformFilter = inventoryFilters.platform;
+
+  return allGamesForView.value.filter((game) => {
+    if (platformFilter && game.platform !== platformFilter) {
+      return false;
+    }
+
+    if (gameTitleKeyword && !game.title.toLowerCase().includes(gameTitleKeyword)) {
+      return false;
+    }
+
+    if (accountNameKeyword && !game.accountName.toLowerCase().includes(accountNameKeyword)) {
+      return false;
+    }
+
+    if (accountIdKeyword && !game.accountExternalId.toLowerCase().includes(accountIdKeyword)) {
+      return false;
+    }
+
+    return true;
+  });
+});
 
 /**
  * 退出登录并清理页面数据。
@@ -223,6 +288,16 @@ async function onDeleteAccount(account: SavedAccount): Promise<void> {
  */
 function gameRowKey(game: OwnedGame): string {
   return `${game.platform}-${game.accountName}-${game.externalId}`;
+}
+
+/**
+ * 重置库存筛选条件。
+ */
+function clearInventoryFilters(): void {
+  inventoryFilters.gameTitle = "";
+  inventoryFilters.platform = undefined;
+  inventoryFilters.accountName = "";
+  inventoryFilters.accountExternalId = "";
 }
 
 /**
@@ -440,11 +515,44 @@ onMounted(async () => {
       </a-card>
 
       <a-card title="全部库存" :bordered="false" class="surface-card">
+        <div class="inventory-filter-grid">
+          <a-input
+            v-model:value="inventoryFilters.gameTitle"
+            allow-clear
+            placeholder="游戏名称（模糊）"
+          />
+          <a-select
+            v-model:value="inventoryFilters.platform"
+            :options="gamePlatformOptions"
+            allow-clear
+            placeholder="平台（下拉）"
+          />
+          <a-input
+            v-model:value="inventoryFilters.accountName"
+            allow-clear
+            placeholder="账号名称（模糊）"
+          />
+          <a-input
+            v-model:value="inventoryFilters.accountExternalId"
+            allow-clear
+            placeholder="账号ID（模糊）"
+          />
+        </div>
+        <div class="inventory-filter-meta">
+          <a-tag color="processing">
+            筛选结果：{{ filteredGames.length }} / {{ allGamesForView.length }}
+          </a-tag>
+          <a-button @click="clearInventoryFilters">重置筛选</a-button>
+        </div>
         <a-table
           :columns="gameTableColumns"
-          :data-source="library?.games ?? []"
+          :data-source="filteredGames"
           :loading="loading"
-          :pagination="{ pageSize: 20, showSizeChanger: true }"
+          :pagination="{
+            pageSize: 20,
+            showSizeChanger: true,
+            showTotal: (total: number) => `共 ${total} 条`
+          }"
           :scroll="{ x: 900 }"
           size="middle"
           :row-key="gameRowKey"
